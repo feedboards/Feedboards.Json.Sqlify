@@ -17,7 +17,7 @@ public class NewtonsoftJsonSqlifyConfigurator : INewtonsoftJsonSqlifyConfigurato
 		this.services = services;
     }
 
-	public INewtonsoftJsonSqlifyConfigurator AddDatabaseCredentials()
+	public INewtonsoftJsonSqlifyConfigurator AddDatabaseDetails()
 	{
 		// TODO Add services
 

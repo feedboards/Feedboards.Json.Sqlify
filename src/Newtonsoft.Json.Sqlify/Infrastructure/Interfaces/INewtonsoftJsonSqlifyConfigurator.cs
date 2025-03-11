@@ -2,5 +2,5 @@
 
 public interface INewtonsoftJsonSqlifyConfigurator
 {
-	INewtonsoftJsonSqlifyConfigurator AddDatabaseCredentials();
+	INewtonsoftJsonSqlifyConfigurator AddDatabaseDetails();
 }
