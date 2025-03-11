@@ -1,0 +1,39 @@
+﻿
+Microsoft Visual Studio Solution File, Format Version 12.00
+# Visual Studio Version 17
+VisualStudioVersion = 17.10.35013.160
+MinimumVisualStudioVersion = 10.0.40219.1
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Newtonsoft.Json.Sqlify", "src\Newtonsoft.Json.Sqlify\Newtonsoft.Json.Sqlify.csproj", "{57E9E68C-2CDF-4041-92D7-67F485253E0C}"
+EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "src", "src", "{EB9B339F-6DB1-4E37-BE2C-C4D7B196B5B2}"
+EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "test", "test", "{2B576C0D-965A-4F99-AB52-1C4991E355C0}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Newtonsoft.Json.Sqlify.CLI", "test\Newtonsoft.Json.Sqlify.CLI\Newtonsoft.Json.Sqlify.CLI.csproj", "{EAC586A5-3F86-4687-9C18-39FE1A574966}"
+EndProject
+Global
+	GlobalSection(SolutionConfigurationPlatforms) = preSolution
+		Debug|Any CPU = Debug|Any CPU
+		Release|Any CPU = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(ProjectConfigurationPlatforms) = postSolution
+		{57E9E68C-2CDF-4041-92D7-67F485253E0C}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{57E9E68C-2CDF-4041-92D7-67F485253E0C}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{57E9E68C-2CDF-4041-92D7-67F485253E0C}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{57E9E68C-2CDF-4041-92D7-67F485253E0C}.Release|Any CPU.Build.0 = Release|Any CPU
+		{EAC586A5-3F86-4687-9C18-39FE1A574966}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{EAC586A5-3F86-4687-9C18-39FE1A574966}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{EAC586A5-3F86-4687-9C18-39FE1A574966}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{EAC586A5-3F86-4687-9C18-39FE1A574966}.Release|Any CPU.Build.0 = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(SolutionProperties) = preSolution
+		HideSolutionNode = FALSE
+	EndGlobalSection
+	GlobalSection(NestedProjects) = preSolution
+		{57E9E68C-2CDF-4041-92D7-67F485253E0C} = {EB9B339F-6DB1-4E37-BE2C-C4D7B196B5B2}
+		{EAC586A5-3F86-4687-9C18-39FE1A574966} = {2B576C0D-965A-4F99-AB52-1C4991E355C0}
+	EndGlobalSection
+	GlobalSection(ExtensibilityGlobals) = postSolution
+		SolutionGuid = {3AE31891-F62C-485C-A05B-9470060883FE}
+	EndGlobalSection
+EndGlobal
