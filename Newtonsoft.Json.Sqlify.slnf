@@ -1,0 +1,8 @@
+{
+  "solution": {
+    "path": "Newtonsoft.Json.Sqlify.sln",
+    "projects": [
+      "src\\Newtonsoft.Json.Sqlify\\Newtonsoft.Json.Sqlify.csproj"
+    ]
+  }
+}
