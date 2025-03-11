@@ -1,4 +1,5 @@
 ﻿using Microsoft.Extensions.DependencyInjection;
+using Newtonsoft.Json.Sqlify.DTOs;
 using Newtonsoft.Json.Sqlify.Infrastructure.Interfaces;
 
 namespace Newtonsoft.Json.Sqlify.Infrastructure;
@@ -17,7 +18,7 @@ public class NewtonsoftJsonSqlifyConfigurator : INewtonsoftJsonSqlifyConfigurato
 		this.services = services;
     }
 
-	public INewtonsoftJsonSqlifyConfigurator AddDatabaseDetails()
+	public INewtonsoftJsonSqlifyConfigurator AddOptions(Option option)
 	{
 		// TODO Add services
 

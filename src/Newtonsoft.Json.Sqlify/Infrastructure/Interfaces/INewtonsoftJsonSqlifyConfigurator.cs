@@ -1,6 +1,8 @@
-﻿namespace Newtonsoft.Json.Sqlify.Infrastructure.Interfaces;
+﻿using Newtonsoft.Json.Sqlify.DTOs;
+
+namespace Newtonsoft.Json.Sqlify.Infrastructure.Interfaces;
 
 public interface INewtonsoftJsonSqlifyConfigurator
 {
-	INewtonsoftJsonSqlifyConfigurator AddDatabaseDetails();
+	INewtonsoftJsonSqlifyConfigurator AddOptions(Option option);
 }
