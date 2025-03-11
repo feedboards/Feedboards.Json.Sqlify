@@ -8,7 +8,7 @@
 	<Authors>Katyaraa1;Katyara11</Authors>
 	<Company>feedboards</Company>
 	<Product>Newtonsoft.Json.Sqlify</Product>
-	<PackageId>Newtonsoft.Json.Sqlify</PackageId>
+	<PackageId>Feedboards.Json.Sqlify</PackageId>
 	<Description>A library for generating SQL code based on the structure of any JSON files.</Description>
 	<PackageTags>JSON;SQL;T-SQL</PackageTags>
 	<RepositoryUrl>https://github.com/feedboards/Newtonsoft.Json.Sqlify</RepositoryUrl>
