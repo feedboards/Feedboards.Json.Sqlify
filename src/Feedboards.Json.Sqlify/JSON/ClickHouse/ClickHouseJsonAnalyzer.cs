@@ -4,7 +4,7 @@ using Newtonsoft.Json.Linq;
 
 namespace Feedboards.Json.Sqlify.JSON.ClickHouse;
 
-internal class JsonAnalyzer
+internal class ClickHouseJsonAnalyzer
 {
     /// <summary>
     /// Recursively analyze the structure of a JSON object to determine field types.
