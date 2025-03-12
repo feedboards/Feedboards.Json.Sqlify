@@ -1,4 +1,4 @@
-﻿namespace Newtonsoft.Json.Sqlify.DTOs;
+﻿namespace Feedboards.Json.Sqlify.DTOs;
 
 public class Option
 {

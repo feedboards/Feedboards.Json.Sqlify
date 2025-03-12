@@ -2,7 +2,7 @@
 using System.Globalization;
 using Newtonsoft.Json.Linq;
 
-namespace Newtonsoft.Json.Sqlify.JSON;
+namespace Feedboards.Json.Sqlify.JSON;
 
 internal class JsonAnalyzer
 {

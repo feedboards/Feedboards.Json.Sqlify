@@ -1,0 +1,8 @@
+{
+  "solution": {
+    "path": "Feedboards.Json.Sqlify.sln",
+    "projects": [
+      "src\\Feedboards.Json.Sqlify\\Feedboards.Json.Sqlify.csproj"
+    ]
+  }
+}
