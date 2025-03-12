@@ -1,8 +1,6 @@
-﻿using Feedboards.Json.Sqlify.SQL.ClickHouse.Interfaces;
+﻿namespace Feedboards.Json.Sqlify.SQL.ClickHouse;
 
-namespace Feedboards.Json.Sqlify.SQL.ClickHouse;
-
-internal class ClickHouseSQLBuilder : IClickHouseSQLBuilder
+internal class ClickHouseSQLBuilder
 {
 	public string GenerateClickHouseSchema(Dictionary<string, string> structure, string tableName)
 	{

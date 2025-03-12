@@ -1,6 +1,5 @@
 ﻿using Feedboards.Json.Sqlify.DTOs.ClickHouse;
 using Feedboards.Json.Sqlify.Infrastructure.Interfaces;
-using Feedboards.Json.Sqlify.SQL.ClickHouse;
 using Microsoft.Extensions.DependencyInjection;
 
 namespace Feedboards.Json.Sqlify.Infrastructure;
@@ -21,7 +20,7 @@ public class FeedboardsJsonSqlifyConfigurator : IFeedboardsJsonSqlifyConfigurato
 
 	public IFeedboardsJsonSqlifyConfigurator UseCLickHouseSchema(ClickHouseOption option)
 	{
-		services.AddSingleton<ClickHouseSQLBuilder>();
+		//services.AddSingleton<>();
 
 		return this;
 	}
