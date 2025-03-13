@@ -1,0 +1,49 @@
+version: "3.8"
+
+services:
+  clickhouse:
+    # login: default
+    # pass: clickhouse
+    image: clickhouse/clickhouse-server
+    container_name: clickhouse
+    ports:
+      - "8123:8123"
+      - "9001:9000"
+    environment:
+      - CLICKHOUSE_PASSWORD=clickhouse
+      - CLICKHOUSE_DEFAULT_ACCESS_MANAGEMENT=1
+    volumes:
+      - d:/Synthix/mounts/clickhouse_data:/var/lib/clickhouse
+      # - d:/Projects/src/RetailLink/Data/MRF/index:/var/lib/clickhouse/user_files/json:ro #We don't need this mount since we have working Python script.
+    networks:
+      - clickhouse-net
+
+  # Using a Docker image related to the official Tabix project
+  tabix:
+    image: u401dk/tabix
+    container_name: tabix
+    ports:
+      - "8880:80"
+    depends_on:
+      - clickhouse
+    networks:
+      - clickhouse-net
+
+  mysql:
+    image: mysql:8.0
+    container_name: mysql
+    ports:
+      - "3306:3306"
+    environment:
+      MYSQL_ROOT_PASSWORD: rootpassword
+      MYSQL_DATABASE: mysql_db
+      MYSQL_USER: mysql_user
+      MYSQL_PASSWORD: mysql_password
+    volumes:
+      - d:/Synthix/mounts/mysql_data:/var/lib/mysql
+    networks:
+      - clickhouse-net
+
+networks:
+  clickhouse-net:
+    driver: bridge

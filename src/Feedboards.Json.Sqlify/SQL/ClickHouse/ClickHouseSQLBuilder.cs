@@ -28,15 +28,7 @@ internal class ClickHouseSQLBuilder
 		}
 
 		var schema = string.Join(",\n", schemaLines);
-
-		var craeteTable = $@"
-CREATE TABLE IF NOT EXISTS {tableName} (
-{schema}
-) ENGINE = MergeTree()
-ORDER BY tuple();
-";
-
-		return craeteTable;
+		return $"CREATE TABLE IF NOT EXISTS {tableName} (\n{schema}\n) ENGINE = MergeTree()\nORDER BY tuple();";
 	}
 
 	private string FormatNestedStructure(string fieldType, int indentLevel = 2)
@@ -50,27 +42,52 @@ ORDER BY tuple();
 		var fields = new List<string>();
 		var currentField = "";
 		var nestedLevel = 0;
+		var inQuotes = false;
+		var parenthesesStack = 0;
 
-		// Parse the fields while respecting nested structures
-		foreach (char contextChar in context)
+		// Parse the fields while respecting nested structures and quoted identifiers
+		foreach (char c in context)
 		{
-			if (contextChar == '(' && currentField.Contains("Nested"))
+			if (c == '`')
 			{
-				nestedLevel++;
-			}
-			else if (contextChar == ')')
-			{
-				nestedLevel--;
+				inQuotes = !inQuotes;
+				currentField += c;
+				continue;
 			}
 
-			if (contextChar == ',' && nestedLevel == 0)
+			if (!inQuotes)
 			{
-				fields.Add(currentField.Trim());
-				currentField = "";
+				if (c == '(')
+				{
+					if (currentField.TrimEnd().EndsWith("Nested"))
+					{
+						nestedLevel++;
+					}
+					parenthesesStack++;
+					currentField += c;
+				}
+				else if (c == ')')
+				{
+					parenthesesStack--;
+					if (nestedLevel > 0 && parenthesesStack == 0)
+					{
+						nestedLevel--;
+					}
+					currentField += c;
+				}
+				else if (c == ',' && nestedLevel == 0 && parenthesesStack == 0)
+				{
+					fields.Add(currentField.Trim());
+					currentField = "";
+				}
+				else
+				{
+					currentField += c;
+				}
 			}
 			else
 			{
-				currentField += contextChar;
+				currentField += c;
 			}
 		}
 
@@ -79,7 +96,7 @@ ORDER BY tuple();
 			fields.Add(currentField.Trim());
 		}
 
-		//Format each field
+		// Format each field
 		var formattedFields = new List<string>();
 		var baseIndent = new string(' ', indentLevel * 4);
 
@@ -87,25 +104,30 @@ ORDER BY tuple();
 		{
 			if (field.Contains("Nested("))
 			{
-				//Recursively format nested structures
-				var index = field.IndexOf("Nested(");
-
-				var fieldName = field.Substring(0, index).Trim();
-				var nestedContent = field.Substring(index);
+				// Recursively format nested structures
+				var parts = field.Split(new[] { "Nested(" }, 2, StringSplitOptions.None);
+				var fieldName = parts[0].Trim();
+				var nestedContent = "Nested(" + parts[1];
+				
+				// Add space between field name and Nested keyword if missing
+				if (!string.IsNullOrEmpty(fieldName) && !fieldName.EndsWith(" "))
+				{
+					fieldName += " ";
+				}
+				
 				var formattedNested = FormatNestedStructure(nestedContent, indentLevel + 1);
-
 				formattedFields.Add($"{fieldName}{formattedNested}");
 			}
 			else
 			{
-				formattedFields.Add(field); //.Trim()
+				formattedFields.Add(field.Trim());
 			}
 		}
 
-		//Join fields with proper formatting
+		// Join fields with proper formatting
 		var fieldsString = string.Join($",\n{baseIndent}", formattedFields);
 
-		var reducedIndent = baseIndent.Length >= 4 ? baseIndent.Substring(0, baseIndent.Length - 4) : "";
+		var reducedIndent = new string(' ', (indentLevel - 1) * 4);
 		return $"Nested(\n{baseIndent}{fieldsString}\n{reducedIndent})";
 	}
 }

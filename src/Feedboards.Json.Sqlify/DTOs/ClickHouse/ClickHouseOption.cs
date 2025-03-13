@@ -2,7 +2,7 @@
 
 public class ClickHouseOption
 {
-	public bool CreateTableInDatabase { get; set; } = false;
-	public bool CreateSQLFile { get; set; } = true;
+	public string? PathToOutputFolder { get; set; } = string.Empty;
+	public string? PathToFolderWithJson {  get; set; } = string.Empty;
 	public ClickHouseDatabaseDetails? DatabaseDetails { get; set; } = null;
 }

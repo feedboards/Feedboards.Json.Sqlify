@@ -1,231 +1,234 @@
 ﻿using System.Data;
 using System.Globalization;
-using Newtonsoft.Json.Linq;
+using System.Text.Json;
 
 namespace Feedboards.Json.Sqlify.JSON.ClickHouse;
 
 internal class ClickHouseJsonAnalyzer
 {
-    /// <summary>
-    /// Recursively analyze the structure of a JSON object to determine field types.
-    /// Returns a dictionary mapping field paths to their ClickHouse data types.
-    /// </summary>
-    public Dictionary<string, string> AnalyzeJsonStructure(
-        JToken token,
-        string prefix = "",
-        int maxDepth = 10,
-        int currentDepth = 0)
-    {
-        var structure = new Dictionary<string, string>();
+	/// <summary>
+	/// Recursively analyze the structure of a JSON object to determine field types.
+	/// Returns a dictionary mapping field paths to their ClickHouse data types.
+	/// </summary>
+	public Dictionary<string, string> AnalyzeJsonStructure(JsonElement jsonData, string prefix, int maxDepth, int currentDepth)
+	{
+		var structure = new Dictionary<string, string>();
 
-        if (currentDepth >= maxDepth)
-        {
-            return structure;
-        }
+		if (currentDepth >= maxDepth)
+		{
+			return structure;
+		}
 
-        if (token.Type == JTokenType.Object)
-        {
-            foreach (var property in ((JObject)token).Properties())
-            {
-                var safeKey = property.Name.Replace(" ", "_");
-                var fieldPath = string.IsNullOrEmpty(prefix) ? safeKey : $"{prefix}.{safeKey}";
-                var value = property.Value;
+		if (jsonData.ValueKind == JsonValueKind.Object)
+		{
+			foreach (var prop in jsonData.EnumerateObject())
+			{
+				// Replace spaces in key names with underscores.
+				var safeKey = prop.Name.Replace(" ", "_");
+				var fieldPath = string.IsNullOrEmpty(prefix) ? safeKey : $"{prefix}.{safeKey}";
+				var value = prop.Value;
 
-                switch (value.Type)
-                {
-                    case JTokenType.Object:
-                        {
-                            var nestedStructure = AnalyzeJsonStructure(
-                                value,
-                                "",
-                                maxDepth,
-                                currentDepth + 1);
+				if (value.ValueKind == JsonValueKind.Object)
+				{
+					// Handle nested object – create a Nested type.
+					var nestedStructure = AnalyzeJsonStructure(value, "", maxDepth, currentDepth + 1);
 
-                            if (nestedStructure.Any())
-                            {
-                                var nestedFields = nestedStructure
-                                    .OrderBy(n => n.Key)
-                                    .Select(n => $"`{n.Key}` {n.Value}");
+					if (nestedStructure.Count > 0)
+					{
+						var nestedFields = new List<string>();
 
-                                structure[fieldPath] = $"Nested(\n        {string.Join(",", nestedFields)}\n    )";
-                            }
-                            else
-                            {
-                                structure[fieldPath] = "String";
-                            }
+						foreach (var kv in nestedStructure.OrderBy(k => k.Key))
+						{
+							nestedFields.Add($"`{kv.Key}` {kv.Value}");
+						}
 
-                            break;
-                        }
+						structure[fieldPath] = $"Nested(\n        {string.Join(",\n        ", nestedFields)}\n    )";
+					}
+					else
+					{
+						structure[fieldPath] = "String";
+					}
+				}
+				else if (value.ValueKind == JsonValueKind.Array && value.GetArrayLength() > 0)
+				{
+					var arr = value.EnumerateArray().ToList();
 
-                    case JTokenType.Array:
-                        {
-                            if (!value.HasValues)
-                            {
-                                break;
-                            }
+					if (arr.All(item => item.ValueKind == JsonValueKind.Object))
+					{
+						// Create a nested structure for arrays of objects.
+						var sample = arr.First();
+						var nestedStructure = AnalyzeJsonStructure(sample, "", maxDepth, currentDepth + 1);
 
-                            var array = (JArray)value;
+						if (nestedStructure.Count > 0)
+						{
+							var nestedFields = new List<string>();
 
-                            if (array.All(item => item.Type == JTokenType.Object))
-                            {
-                                var nestedStructure = AnalyzeJsonStructure(
-                                    array.First,
-                                    "",
-                                    maxDepth,
-                                    currentDepth + 1);
+							foreach (var kv in nestedStructure.OrderBy(k => k.Key))
+							{
+								nestedFields.Add($"`{kv.Key}` {kv.Value}");
+							}
 
-                                if (nestedStructure.Any())
-                                {
-                                    var nestedFields = nestedStructure
-                                        .OrderBy(n => n.Key)
-                                        .Select(n => $"`{n.Key}` {n.Value}");
-                                    structure[fieldPath] = $"Nested(\n        {string.Join(",", nestedFields)}\n    )";
-                                }
-                                else
-                                {
-                                    structure[fieldPath] = "Array(String)";
-                                }
-                            }
-                            else if (array.All(item =>
-                                        item.Type == JTokenType.String ||
-                                        item.Type == JTokenType.Integer ||
-                                        item.Type == JTokenType.Float ||
-                                        item.Type == JTokenType.Boolean ||
-                                        item.Type == JTokenType.Null))
-                            {
-                                var types = array
-                                    .Where(item => item.Type != JTokenType.Null)
-                                    .Select(item => DetectType(item))
-                                    .ToList();
+							structure[fieldPath] = $"Nested(\n        {string.Join(",\n        ", nestedFields)}\n    )";
+						}
+						else
+						{
+							structure[fieldPath] = "Array(String)";
+						}
+					}
+					else if (arr.All(item =>
+						item.ValueKind == JsonValueKind.String ||
+						item.ValueKind == JsonValueKind.Number ||
+						item.ValueKind == JsonValueKind.True ||
+						item.ValueKind == JsonValueKind.False ||
+						item.ValueKind == JsonValueKind.Null))
+					{
+						var types = arr.Where(item => item.ValueKind != JsonValueKind.Null)
+									 .Select(item => DetectType(item))
+									 .ToList();
+						if (types.Count == 0)
+						{
+							structure[fieldPath] = "Array(String)";
+						}
+						else
+						{
+							if (types.All(t => t.StartsWith("UInt")))
+							{
+								var maxType = types.OrderBy(t =>
+								{
+									var numStr = new string(t.Skip(4).TakeWhile(Char.IsDigit).ToArray());
+									return int.TryParse(numStr, out int n) ? n : 0;
+								}).Last();
 
-                                if (!types.Any())
-                                {
-                                    structure[fieldPath] = "Array(String)";
-                                }
-                                else if (types.All(t => t.StartsWith("UInt")))
-                                {
-                                    string maxType = types.OrderBy(t =>
-                                    {
-                                        var numeric = 0;
-                                        int.TryParse(t.Substring(4), out numeric);
+								structure[fieldPath] = $"Array({maxType})";
+							}
+							else if (types.All(t => t.StartsWith("Int")))
+							{
+								var maxType = types.OrderBy(t =>
+								{
+									var numStr = new string(t.Skip(3).TakeWhile(Char.IsDigit).ToArray());
+									return int.TryParse(numStr, out int n) ? n : 0;
+								}).Last();
 
-                                        return numeric;
-                                    }).Last();
-                                    structure[fieldPath] = $"Array({maxType})";
-                                }
-                                else if (types.All(t => t.StartsWith("Int")))
-                                {
-                                    string maxType = types.OrderBy(t =>
-                                    {
-                                        var numeric = 0;
-                                        int.TryParse(t.Substring(3), out numeric);
+								structure[fieldPath] = $"Array({maxType})";
+							}
+							else if (types.Any(t => t == "Float64"))
+							{
+								structure[fieldPath] = "Array(Float64)";
+							}
+							else if (types.All(t => t == "DateTime64(3)"))
+							{
+								structure[fieldPath] = "Array(DateTime64(3))";
+							}
+							else
+							{
+								structure[fieldPath] = "Array(String)";
+							}
+						}
+					}
+					else
+					{
+						structure[fieldPath] = "Array(String)";
+					}
+				}
+				else
+				{
+					structure[fieldPath] = DetectType(value);
+				}
+			}
+		}
 
-                                        return numeric;
-                                    }).Last();
-                                    structure[fieldPath] = $"Array({maxType})";
-                                }
-                                else if (types.Any(t => t == "Float64"))
-                                {
-                                    structure[fieldPath] = "Array(Float64)";
-                                }
-                                else
-                                {
-                                    structure[fieldPath] = "Array(String)";
-                                }
-                            }
-                            else
-                            {
-                                structure[fieldPath] = "Array(String)";
-                            }
+		return structure;
+	}
 
-                            break;
-                        }
+	private static string DetectType(JsonElement value)
+	{
+		if (value.ValueKind == JsonValueKind.Null)
+		{
+			return "Nullable(String)";
+		}
+		else if (value.ValueKind == JsonValueKind.True || value.ValueKind == JsonValueKind.False)
+		{
+			return "UInt8";
+		}
+		else if (value.ValueKind == JsonValueKind.Number)
+		{
+			// Try to treat the number as an integer first.
+			if (value.TryGetInt64(out long intVal))
+			{
+				if (intVal >= 0)
+				{
+					if (intVal < (1L << 8))
+					{
+						return "UInt8";
+					}
+					else if (intVal < (1L << 16))
+					{
+						return "UInt16";
+					}
+					else if (intVal < (1L << 32))
+					{
+						return "UInt32";
+					}
+					else
+					{
+						return "UInt64";
+					}
+				}
+				else
+				{
+					if (intVal >= -(1L << 7) && intVal < (1L << 7))
+					{
+						return "Int8";
+					}
+					else if (intVal >= -(1L << 15) && intVal < (1L << 15))
+					{
+						return "Int16";
+					}
+					else if (intVal >= -(1L << 31) && intVal < (1L << 31))
+					{
+						return "Int32";
+					}
+					else
+					{
+						return "Int64";
+					}
+				}
+			}
+			else
+			{
+				// If not an integer, use float type.
+				return "Float64";
+			}
+		}
+		else if (value.ValueKind == JsonValueKind.String)
+		{
+			var str = value.GetString();
 
-                    default:
-                        structure[fieldPath] = DetectType(value);
-                        break;
-                }
-            }
-        }
+			if (!string.IsNullOrEmpty(str))
+			{
+				// Check for date in the format yyyy-MM-dd
+				if (str.Length == 10 && str[4] == '-' && str[7] == '-')
+				{
+					if (DateTime.TryParseExact(str, "yyyy-MM-dd", CultureInfo.InvariantCulture, DateTimeStyles.None, out _))
+					{
+						return "Date";
+					}
+				}
+				// Check for datetime in a typical ISO 8601 format (e.g. yyyy-MM-ddTHH:mm:ss)
+				if (str.Length >= 19 && str[4] == '-' && str[7] == '-' && str[10] == 'T' && str[13] == ':' && str[16] == ':')
+				{
+					if (DateTime.TryParse(str, out _))
+					{
+						return "DateTime64(3)";
+					}
+				}
+			}
 
-        return structure;
-    }
-
-    private string DetectType(JToken token)
-    {
-        switch (token.Type)
-        {
-            case JTokenType.Null:
-                return "Nullable(String)";
-
-            case JTokenType.Boolean:
-                return "UInt8";
-
-            case JTokenType.Integer:
-                var value = token.Value<long>();
-
-                if (value >= 0)
-                {
-                    if (value < 256)
-                    {
-                        return "UInt8";
-                    }
-                    else if (value < 65536)
-                    {
-                        return "UInt16";
-                    }
-                    else if (value < (long)Math.Pow(2, 32))
-                    {
-                        return "UInt32";
-                    }
-                    else
-                    {
-                        return "UInt64";
-                    }
-                }
-                else
-                {
-                    if (value >= -128 && value < 128)
-                    {
-                        return "Int8";
-                    }
-                    else if (value >= -32768 && value < 32768)
-                    {
-                        return "Int16";
-                    }
-                    else if (value >= -2147483648 && value < 2147483648)
-                    {
-                        return "Int32";
-                    }
-                    else
-                    {
-                        return "Int64";
-                    }
-                }
-
-            case JTokenType.Float:
-                return "Float64";
-
-            case JTokenType.String:
-                var str = token.Value<string>();
-
-                if (str.Length == 10 && str[4] == '-' && str[7] == '-')
-                {
-                    if (DateTime.TryParseExact(
-                        str.Substring(0, 19),
-                        "yyyy-MM-ddTHH:mm:ss",
-                        CultureInfo.InvariantCulture,
-                        DateTimeStyles.None,
-                        out DateTime _))
-                    {
-                        return "DateTime64(3)";
-                    }
-                }
-
-                return "String";
-
-            default:
-                return "string";
-        }
-    }
+			return "String";
+		}
+		else
+		{
+			return "String";
+		}
+	}
 }

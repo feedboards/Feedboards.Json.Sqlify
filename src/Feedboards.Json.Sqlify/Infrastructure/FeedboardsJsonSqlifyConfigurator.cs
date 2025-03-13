@@ -1,4 +1,6 @@
-﻿using Feedboards.Json.Sqlify.DTOs.ClickHouse;
+﻿using Feedboards.Json.Sqlify.Clients.ClickHouse.Interfaces;
+using Feedboards.Json.Sqlify.Clients.ClickHousel;
+using Feedboards.Json.Sqlify.DTOs.ClickHouse;
 using Feedboards.Json.Sqlify.Infrastructure.Interfaces;
 using Microsoft.Extensions.DependencyInjection;
 
@@ -18,9 +20,10 @@ public class FeedboardsJsonSqlifyConfigurator : IFeedboardsJsonSqlifyConfigurato
 		this.services = services;
 	}
 
-	public IFeedboardsJsonSqlifyConfigurator UseCLickHouseSchema(ClickHouseOption option)
+	public IFeedboardsJsonSqlifyConfigurator UseCLickHouseSchema(ClickHouseOption? option = null) //TODO it mustn't be required
 	{
-		//services.AddSingleton<>();
+		services.AddTransient<IClickHouseClient, ClickHouseClient>(provider => 
+			new ClickHouseClient(option));
 
 		return this;
 	}
