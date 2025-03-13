@@ -11,4 +11,8 @@
     <ProjectReference Include="..\..\src\Feedboards.Json.Sqlify\Feedboards.Json.Sqlify.csproj" />
   </ItemGroup>
 
+  <ItemGroup>
+    <Folder Include="test\SQL\" />
+  </ItemGroup>
+
 </Project>

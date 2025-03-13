@@ -72,7 +72,18 @@ public class ClickHouseClient : IClickHouseClient
 		{
 			if (jsonFolderType == FileOrFolderChecker.Folder)
 			{
+				foreach (var file in Directory.GetFiles(jsonFolder))
+				{
+					var fileName = Path.GetFileName(file).Split('.')[0];
+					var sqlFileName = Path.GetFileName(file).Split('.')[0] + ".sql";
 
+					Console.WriteLine(sqlFileName);
+
+					GenerateSQL(
+						file,
+						Path.Combine(outputFolder, sqlFileName),
+						fileName);
+				}
 			}
 			else //In this case arguments jsonFolder and outputFolder will have name of file.
 			{
