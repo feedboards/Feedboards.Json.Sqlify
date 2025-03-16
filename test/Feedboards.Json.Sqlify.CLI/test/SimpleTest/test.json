@@ -1,0 +1,26 @@
+[
+  {
+    "user_id": 101,
+    "message": "Hello, ClickHouse!",
+    "timestamp": "2025-03-12T12:00:00Z",
+    "metric": -1.0
+  },
+  {
+    "user_id": 102,
+    "message": "Insert a lot of rows per batch",
+    "timestamp": "2025-03-11T12:00:00Z",
+    "metric": 1.41421
+  },
+  {
+    "user_id": 102,
+    "message": "Sort your data based on your commonly-used queries",
+    "timestamp": "2025-03-12T00:00:00Z",
+    "metric": 2.718
+  },
+  {
+    "user_id": 101,
+    "message": "Granules are the smallest chunks of data read",
+    "timestamp": "2025-03-12T12:00:05Z",
+    "metric": 3.14159
+  }
+]

@@ -5,24 +5,31 @@ internal class ClickHouseSQLBuilder
 	public string GenerateClickHouseSchema(Dictionary<string, string> structure, string tableName)
 	{
 		var schemaLines = new List<string>();
+		var processedFields = new HashSet<string>();
 
 		foreach (var kvp in structure.OrderBy(kvp => kvp.Key))
 		{
 			string fieldName = kvp.Key;
 			string fieldType = kvp.Value;
 
-			// Only process top-level fields
+			// Skip if we've already processed this field or its parent
+			if (processedFields.Any(f => fieldName.StartsWith(f + ".")))
+			{
+				continue;
+			}
+
 			if (!fieldName.Contains("."))
 			{
-				// Format nested structures if needed
 				if (fieldType.StartsWith("Nested("))
 				{
 					string formattedType = FormatNestedStructure(fieldType);
 					schemaLines.Add($"    `{fieldName}` {formattedType}");
+					processedFields.Add(fieldName);
 				}
 				else
 				{
 					schemaLines.Add($"    `{fieldName}` {fieldType}");
+					processedFields.Add(fieldName);
 				}
 			}
 		}
@@ -45,7 +52,6 @@ internal class ClickHouseSQLBuilder
 		var inQuotes = false;
 		var parenthesesStack = 0;
 
-		// Parse the fields while respecting nested structures and quoted identifiers
 		foreach (char c in context)
 		{
 			if (c == '`')
@@ -96,7 +102,6 @@ internal class ClickHouseSQLBuilder
 			fields.Add(currentField.Trim());
 		}
 
-		// Format each field
 		var formattedFields = new List<string>();
 		var baseIndent = new string(' ', indentLevel * 4);
 
@@ -104,7 +109,6 @@ internal class ClickHouseSQLBuilder
 		{
 			if (field.Contains("Nested("))
 			{
-				// Recursively format nested structures
 				var parts = field.Split(new[] { "Nested(" }, 2, StringSplitOptions.None);
 				var fieldName = parts[0].Trim();
 				var nestedContent = "Nested(" + parts[1];
@@ -124,10 +128,9 @@ internal class ClickHouseSQLBuilder
 			}
 		}
 
-		// Join fields with proper formatting
 		var fieldsString = string.Join($",\n{baseIndent}", formattedFields);
-
 		var reducedIndent = new string(' ', (indentLevel - 1) * 4);
+		
 		return $"Nested(\n{baseIndent}{fieldsString}\n{reducedIndent})";
 	}
 }

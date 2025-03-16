@@ -110,7 +110,7 @@ public class ClickHouseClient : IClickHouseClient
 
 				var schema = sqlBuilder.GenerateClickHouseSchema(structure, tableName);
 
-				string outputPath = Path.GetFullPath(outputFolder);
+				var outputPath = Path.GetFullPath(outputFolder);
 				File.WriteAllText(outputPath, schema);
 			}
 		}
