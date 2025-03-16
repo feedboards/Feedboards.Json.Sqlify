@@ -48,11 +48,11 @@ if isinstance(data, dict) and 'test' in data:
     # Extract arrays for each nested column
     names = [item['name'] for item in data['test']]
     titles = [item['title'] for item in data['test']]
-    
+
     # Create the data structure ClickHouse expects for Nested types
     rows = [[names, titles]]  # Single row with arrays
     columns = ['test.name', 'test.title']
-    
+
     # Insert data into the table
     client.insert(table=CLICKHOUSE_TABLE, data=rows, column_names=columns)
     print("Data inserted successfully.")
