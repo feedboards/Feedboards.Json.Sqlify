@@ -18,8 +18,21 @@ A .NET library for converting JSON data structures into SQL schemas and tables. 
 
 ## Installation
 
+### Building from Source
+
 ```bash
-dotnet add package Feedboards.Json.Sqlify  # Coming soon
+# Clone the repository
+git clone https://github.com/yourusername/Feedboards.Json.Sqlify.git
+cd Feedboards.Json.Sqlify
+
+# Build the solution
+dotnet build
+```
+
+### NuGet Package (Coming Soon)
+
+```bash
+dotnet add package Feedboards.Json.Sqlify
 ```
 
 ## Quick Start
@@ -34,16 +47,12 @@ var options = new ClickHouseOption
 
 var client = new ClickHouseClient(options);
 
-// you can also do like this. In this case you need to provide all arguments in methods
-var client = new ClickHouseClient(options);
-
 // Generate SQL from a single JSON file
 client.GenerateSQL(
     jsonFolder: "path/to/input.json",
     outputFolder: "path/to/output.sql",
     tableName: "my_table",
-    // this is unnessary argument. iof you don't provide this, value will avtomaticly be 10
-    maxDepth: 10
+    maxDepth: 10  // Optional, defaults to 10
 );
 
 // Or process an entire directory of JSON files
@@ -51,9 +60,8 @@ client.GenerateSQL(
     jsonFolder: "path/to/json/folder",
     outputFolder: "path/to/sql/folder"
 );
-//In this case name of the table will be the same as the name of file.
-//Please do not use any spetial charecter as . in the
-
+// Note: When processing a directory, table names will be derived from JSON filenames.
+// Avoid using special characters (like dots) in filenames.
 ```
 
 ## JSON to SQL Mapping Example
@@ -89,6 +97,8 @@ ORDER BY tuple();
 
 The main class for generating SQL schemas from JSON.
 
+> **Note**: Some methods shown in the API Reference are currently in development and may not work as expected. Only the methods demonstrated in the Quick Start section are fully implemented and tested.
+
 #### Constructor
 
 ```csharp
@@ -117,14 +127,6 @@ public bool GenerateSQL(string folderPath, FolderType folderType, string? tableN
 public bool GenerateSQL(string jsonFolder, string outputFolder, string? tableName = null, int? maxDepth = 10)
 ```
 
-Parameters:
-
-- `jsonFolder`: Path to JSON file or folder
-- `outputFolder`: Path where SQL files will be generated
-- `tableName`: Name for the generated table
-- `maxDepth`: Maximum nesting depth to process (default: 10)
-- `folderType`: Specifies whether the path is for JSON input or SQL output
-
 ### Configuration
 
 ```csharp
@@ -137,15 +139,15 @@ public class ClickHouseOption
 
 ## Data Type Mapping
 
-| JSON Type        | ClickHouse Type |
-| ---------------- | --------------- |
-| Number (integer) | UInt64/Int64    |
-| Number (float)   | Float64         |
-| String           | String          |
-| Boolean          | UInt8           |
-| Array            | Array or Nested |
-| Object           | Nested          |
-| null             | Nullable        |
+| JSON Type        | ClickHouse Type | Notes                               |
+| ---------------- | --------------- | ----------------------------------- |
+| Number (integer) | UInt64/Int64    | Automatically detects integer range |
+| Number (float)   | Float64         | For decimal numbers                 |
+| String           | String          | UTF-8 encoded                       |
+| Boolean          | UInt8           | 0 for false, 1 for true             |
+| Array            | Array or Nested | Based on content type               |
+| Object           | Nested          | Creates nested structure            |
+| null             | Nullable        | Makes the field nullable            |
 
 ## Best Practices
 
@@ -153,6 +155,8 @@ public class ClickHouseOption
 2. Keep nested structures within reasonable depth (recommended max: 10)
 3. Ensure consistent JSON structure across files when processing directories
 4. Use appropriate file permissions for input/output directories
+5. Avoid using special characters in filenames when processing directories
+6. Consider the performance impact of deeply nested structures
 
 ## Error Handling
 
@@ -163,15 +167,37 @@ The library provides error handling for common scenarios:
 - Invalid JSON structures
 - Excessive nesting depth
 - Missing required parameters
+- File permission issues
+- Invalid table names
 
 ## Contributing
 
-Contributions are welcome! Please feel free to submit a Pull Request.
+Contributions are welcome! Please feel free to submit a Pull Request. Before submitting:
+
+1. Fork the repository
+2. Create your feature branch
+3. Commit your changes
+4. Push to the branch
+5. Create a new Pull Request
 
 ## License
 
-[License Type] - see LICENSE file for details
+This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
 
 ## Support
 
-For support, please open an issue in the GitHub repository.
+For support, please:
+
+1. Check the [documentation](docs/)
+2. Open an issue in the GitHub repository
+3. Contact the maintainers
+
+## Roadmap
+
+- [ ] Add an advanced error system
+- [ ] Add support for MSSQL
+- [ ] Add support for PostgreSQL
+- [ ] Add support for MySQL
+- [ ] Improve type inference
+- [ ] Add support for custom type mappings
+- [ ] Add support for schema validation
