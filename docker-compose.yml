@@ -13,8 +13,8 @@ services:
       - CLICKHOUSE_PASSWORD=clickhouse
       - CLICKHOUSE_DEFAULT_ACCESS_MANAGEMENT=1
     volumes:
-      - /mnt/f:/tmp/test/clickhouse_data:/var/lib/clickhouse
-      - /mnt/f:/tmp/test/json:/var/lib/clickhouse/user_files/json
+      - f:/tmp/test/clickhouse_data:/var/lib/clickhouse
+      - f:/tmp/test/json:/var/lib/clickhouse/user_files/json
       # - d:/Projects/src/RetailLink/Data/MRF/index:/var/lib/clickhouse/user_files/json:ro #We don't need this mount since we have working Python script.
     networks:
       - clickhouse-net
