@@ -8,21 +8,21 @@ Console.WriteLine("Hello, World!");
 var client = new ClickHouseClient();
 
 //client.GenerateSQL(
-//	@"F:\Projects\src\Newtonsoft.Json.Sqlify\test\Feedboards.Json.Sqlify.CLI\test\adyawater.com_products_1.json",
-//	@"F:\Projects\src\Newtonsoft.Json.Sqlify\test\Feedboards.Json.Sqlify.CLI\test\test_2.sql",
+//	@"F:\Projects\src\Feedboards.Json.Sqlify\test\Feedboards.Json.Sqlify.CLI\test\adyawater.com_products_1.json",
+//	@"F:\Projects\src\Feedboards.Json.Sqlify\test\Feedboards.Json.Sqlify.CLI\test\test_2.sql",
 //	"test_2");
 
 client.GenerateSQL(
-	@"F:\Projects\src\Newtonsoft.Json.Sqlify\test\Feedboards.Json.Sqlify.CLI\test\SimpleTest\test.json",
-	@"F:\Projects\src\Newtonsoft.Json.Sqlify\test\Feedboards.Json.Sqlify.CLI\test\SimpleTest\test.sql",
+	@"F:\Projects\src\Feedboards.Json.Sqlify\test\Feedboards.Json.Sqlify.CLI\test\SimpleTest\test.json",
+	@"F:\Projects\src\Feedboards.Json.Sqlify\test\Feedboards.Json.Sqlify.CLI\test\SimpleTest\test.sql",
 	"test");
 
 //client.GenerateSQL(
-//	@"F:\Projects\src\Newtonsoft.Json.Sqlify\test\Feedboards.Json.Sqlify.CLI\test\JSON",
-//	@"F:\Projects\src\Newtonsoft.Json.Sqlify\test\Feedboards.Json.Sqlify.CLI\test\SQL");
+//	@"F:\Projects\src\Feedboards.Json.Sqlify\test\Feedboards.Json.Sqlify.CLI\test\JSON",
+//	@"F:\Projects\src\Feedboards.Json.Sqlify\test\Feedboards.Json.Sqlify.CLI\test\SQL");
 
 
-//var filePath = @"F:\Projects\src\Newtonsoft.Json.Sqlify\test\Feedboards.Json.Sqlify.CLI\test\SimpleTest\test.json";
+//var filePath = @"F:\Projects\src\Feedboards.Json.Sqlify\test\Feedboards.Json.Sqlify.CLI\test\SimpleTest\test.json";
 //var clickHouseUrl = "http://localhost:8123/?query=INSERT%20INTO%20my_first_table%20FORMAT%20JSONEachRow";
 
 //// Set your ClickHouse credentials

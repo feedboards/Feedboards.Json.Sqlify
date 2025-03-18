@@ -8,11 +8,11 @@
   </PropertyGroup>
 
   <ItemGroup>
-    <ProjectReference Include="..\..\src\Feedboards.Json.Sqlify\Feedboards.Json.Sqlify.csproj" />
+    <Folder Include="test\SQL\" />
   </ItemGroup>
 
   <ItemGroup>
-    <Folder Include="test\SQL\" />
+    <ProjectReference Include="..\..\src\Feedboards.Json.Sqlify\Feedboards.Json.Sqlify.csproj" />
   </ItemGroup>
 
 </Project>
