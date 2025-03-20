@@ -7,17 +7,23 @@ Console.WriteLine("Hello, World!");
 
 var client = new ClickHouseClient();
 
-//client.GenerateSQL(
+//client.GenerateSQLAndWrite(
 //	@"F:\Projects\src\Feedboards.Json.Sqlify\test\Feedboards.Json.Sqlify.CLI\test\adyawater.com_products_1.json",
 //	@"F:\Projects\src\Feedboards.Json.Sqlify\test\Feedboards.Json.Sqlify.CLI\test\adyawater.com_products_1.sql",
 //	"products");
 
-client.GenerateSQL(
+//client.GenerateSQLAndWrite(
+//	@"F:\Projects\src\Feedboards.Json.Sqlify\test\Feedboards.Json.Sqlify.CLI\test\SimpleTest\test.json",
+//	@"F:\Projects\src\Feedboards.Json.Sqlify\test\Feedboards.Json.Sqlify.CLI\test\SimpleTest\test_2.sql",
+//	"test");
+
+var result = client.GenerateSQL(
 	@"F:\Projects\src\Feedboards.Json.Sqlify\test\Feedboards.Json.Sqlify.CLI\test\SimpleTest\test.json",
-	@"F:\Projects\src\Feedboards.Json.Sqlify\test\Feedboards.Json.Sqlify.CLI\test\SimpleTest\test_2.sql",
 	"test");
 
-//client.GenerateSQL(
+Console.WriteLine(result);
+
+//client.GenerateSQLAndWrite(
 //	@"F:\Projects\src\Feedboards.Json.Sqlify\test\Feedboards.Json.Sqlify.CLI\test\JSON",
 //	@"F:\Projects\src\Feedboards.Json.Sqlify\test\Feedboards.Json.Sqlify.CLI\test\SQL");
 

@@ -1,3 +1,5 @@
+SET flatten_nested=0;
+
 CREATE TABLE IF NOT EXISTS 4pistonracingcom_products_3 (
     `products` Nested(
         `body_html` String,
@@ -6,18 +8,18 @@ CREATE TABLE IF NOT EXISTS 4pistonracingcom_products_3 (
         `id` UInt64,
         `images` Nested(
             `created_at` DateTime64(3),
-            `height` UInt16,
+            `height` UInt64,
             `id` UInt64,
-            `position` UInt8,
+            `position` UInt64,
             `product_id` UInt64,
             `src` String,
             `updated_at` DateTime64(3),
-            `variant_ids` String,
-            `width` UInt16
+            `variant_ids` Array(String),
+            `width` UInt64
         ),
         `options` Nested(
             `name` String,
-            `position` UInt8,
+            `position` UInt64,
             `values` Array(String)
         ),
         `product_type` String,
@@ -30,12 +32,12 @@ CREATE TABLE IF NOT EXISTS 4pistonracingcom_products_3 (
             `compare_at_price` Nullable(String),
             `created_at` DateTime64(3),
             `featured_image` Nullable(String),
-            `grams` UInt16,
+            `grams` UInt64,
             `id` UInt64,
             `option1` String,
             `option2` Nullable(String),
             `option3` Nullable(String),
-            `position` UInt8,
+            `position` UInt64,
             `price` String,
             `product_id` UInt64,
             `requires_shipping` UInt8,

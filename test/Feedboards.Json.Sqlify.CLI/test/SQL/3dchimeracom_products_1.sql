@@ -1,3 +1,5 @@
+SET flatten_nested=0;
+
 CREATE TABLE IF NOT EXISTS 3dchimeracom_products_1 (
     `products` Nested(
         `body_html` String,
@@ -6,18 +8,18 @@ CREATE TABLE IF NOT EXISTS 3dchimeracom_products_1 (
         `id` UInt64,
         `images` Nested(
             `created_at` DateTime64(3),
-            `height` UInt16,
+            `height` UInt64,
             `id` UInt64,
-            `position` UInt8,
+            `position` UInt64,
             `product_id` UInt64,
             `src` String,
             `updated_at` DateTime64(3),
             `variant_ids` Array(UInt64),
-            `width` UInt16
+            `width` UInt64
         ),
         `options` Nested(
             `name` String,
-            `position` UInt8,
+            `position` UInt64,
             `values` Array(String)
         ),
         `product_type` String,
@@ -32,21 +34,21 @@ CREATE TABLE IF NOT EXISTS 3dchimeracom_products_1 (
             `featured_image` Nested(
                 `alt` String,
                 `created_at` DateTime64(3),
-                `height` UInt16,
+                `height` UInt64,
                 `id` UInt64,
-                `position` UInt8,
+                `position` UInt64,
                 `product_id` UInt64,
                 `src` String,
                 `updated_at` DateTime64(3),
                 `variant_ids` Array(UInt64),
-                `width` UInt16
+                `width` UInt64
             ),
-            `grams` UInt8,
+            `grams` UInt64,
             `id` UInt64,
             `option1` String,
             `option2` Nullable(String),
             `option3` Nullable(String),
-            `position` UInt8,
+            `position` UInt64,
             `price` String,
             `product_id` UInt64,
             `requires_shipping` UInt8,
