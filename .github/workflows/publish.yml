@@ -19,8 +19,8 @@ jobs:
       - name: Build
         run: dotnet build Feedboards.Json.Sqlify.slnf --configuration Release --no-restore
 
-      - name: Pack
-        run: dotnet pack Feedboards.Json.Sqlify.slnf --configuration Release --no-build --output ./nupkgs -p:PackageVersion=${{ github.ref_name }}
+      - name: Pack with symbols and source
+        run: dotnet pack Feedboards.Json.Sqlify.slnf --configuration Release --no-build --output ./nupkgs -p:PackageVersion=${{ github.ref_name }} --include-symbols --include-source
 
       - name: Publish to GitHub Packages
         run: dotnet nuget push ./nupkgs/*.nupkg --source "https://api.nuget.org/v3/index.json" --api-key ${{ secrets.NUGET_API_KEY }} --skip-duplicate

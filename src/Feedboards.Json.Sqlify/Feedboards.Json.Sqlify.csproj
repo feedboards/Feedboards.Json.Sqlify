@@ -13,11 +13,26 @@
 	<PackageTags>JSON;SQL;T-SQL</PackageTags>
 	<RepositoryUrl>https://github.com/feedboards/Feedboards.Json.Sqlify</RepositoryUrl>
 	<RepositoryType>git</RepositoryType>
+
+	<!-- SourceLink and Debugging -->
+	<PublishRepositoryUrl>true</PublishRepositoryUrl>
+	<EmbedUntrackedSources>true</EmbedUntrackedSources>
+	<EnableSourceLink>true</EnableSourceLink>
+  </PropertyGroup>
+
+  <PropertyGroup Condition="'$(Configuration)' == 'Release'">
+	<DebugType>portable</DebugType>
+	<DebugSymbols>true</DebugSymbols>
+	<Optimize>false</Optimize>
+	<!-- Optional: Disabling optimizations helps with breakpoints -->
+	<EmbedUntrackedSources>true</EmbedUntrackedSources>
+	<AllowedOutputExtensionsInPackageBuildOutputFolder>.pdb</AllowedOutputExtensionsInPackageBuildOutputFolder>
   </PropertyGroup>
 
   <ItemGroup>
     <PackageReference Include="Microsoft.Extensions.DependencyInjection.Abstractions" Version="8.0.1" />
     <PackageReference Include="RestSharp" Version="112.1.0" />
+	<PackageReference Include="Microsoft.SourceLink.GitHub" Version="8.0.0" PrivateAssets="All"/>
   </ItemGroup>
 	
 </Project>
