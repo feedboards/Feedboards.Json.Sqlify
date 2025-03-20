@@ -91,6 +91,61 @@ CREATE TABLE IF NOT EXISTS test_table (
 ORDER BY tuple();
 ```
 
+### Nested Structures and flatten_nested Setting
+
+When dealing with nested structures inside other nested structures, the library automatically adds the `flatten_nested=0` setting to ensure proper handling of complex nested data. For example:
+
+Input JSON with nested-in-nested structure:
+
+```json
+{
+  "products": [
+    {
+      "name": "Product 1",
+      "variants": [
+        {
+          "size": "M",
+          "colors": [
+            {
+              "name": "Red",
+              "code": "#FF0000"
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}
+```
+
+Generated SQL:
+
+```sql
+SET flatten_nested=0;
+
+CREATE TABLE IF NOT EXISTS products_table (
+    `products` Nested(
+        `name` String,
+        `variants` Nested(
+            `size` String,
+            `colors` Nested(
+                `name` String,
+                `code` String
+            )
+        )
+    )
+) ENGINE = MergeTree()
+ORDER BY tuple();
+```
+
+The `flatten_nested=0` setting is automatically added when:
+
+- A nested structure contains another nested structure
+- The nesting depth is greater than 1 level
+- Complex nested arrays or objects are present
+
+This setting ensures that ClickHouse preserves the hierarchical structure of your data and allows for proper querying of nested fields.
+
 ## API Reference
 
 ### ClickHouseClient
