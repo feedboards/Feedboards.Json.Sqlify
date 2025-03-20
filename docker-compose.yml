@@ -13,9 +13,8 @@ services:
       - CLICKHOUSE_PASSWORD=clickhouse
       - CLICKHOUSE_DEFAULT_ACCESS_MANAGEMENT=1
     volumes:
-      - f:/tmp/test/clickhouse_data:/var/lib/clickhouse
-      - f:/tmp/test/json:/var/lib/clickhouse/user_files/json
-      # - d:/Projects/src/RetailLink/Data/MRF/index:/var/lib/clickhouse/user_files/json:ro #We don't need this mount since we have working Python script.
+      - clickhouse_data:/var/lib/clickhouse
+      - clickhouse_user_files:/var/lib/clickhouse/user_files/json
     networks:
       - clickhouse-net
 
@@ -44,6 +43,10 @@ services:
       - d:/Synthix/mounts/mysql_data:/var/lib/mysql
     networks:
       - clickhouse-net
+
+volumes:
+  clickhouse_data:
+  clickhouse_user_files:
 
 networks:
   clickhouse-net:

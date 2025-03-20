@@ -1,11 +1,39 @@
 ﻿namespace Feedboards.Json.Sqlify.SQL.ClickHouse;
+using System.Text;
 
 internal class ClickHouseSQLBuilder
 {
+	private bool HasNestedInNested(Dictionary<string, string> structure)
+	{
+		foreach (var kvp in structure)
+		{
+			if (kvp.Value.Contains("Nested("))
+			{
+				var nestedCount = kvp.Value.Split(new[] { "Nested(" }, StringSplitOptions.None).Length - 1;
+
+				if (nestedCount > 1)
+				{
+					return true;
+				}
+			}
+		}
+		return false;
+	}
+
 	public string GenerateClickHouseSchema(Dictionary<string, string> structure, string tableName)
 	{
 		var schemaLines = new List<string>();
 		var processedFields = new HashSet<string>();
+		var needsFlattenNested = HasNestedInNested(structure);
+
+		var sqlBuilder = new StringBuilder();
+		
+		// Add SET flatten_nested=0 if we have nested in nested structures
+		if (needsFlattenNested)
+		{
+			sqlBuilder.AppendLine("SET flatten_nested=0;");
+			sqlBuilder.AppendLine();
+		}
 
 		foreach (var kvp in structure.OrderBy(kvp => kvp.Key))
 		{
@@ -35,7 +63,13 @@ internal class ClickHouseSQLBuilder
 		}
 
 		var schema = string.Join(",\n", schemaLines);
-		return $"CREATE TABLE IF NOT EXISTS {tableName} (\n{schema}\n) ENGINE = MergeTree()\nORDER BY tuple();";
+
+		sqlBuilder.AppendLine($"CREATE TABLE IF NOT EXISTS {tableName} (");
+		sqlBuilder.AppendLine(schema);
+		sqlBuilder.AppendLine(") ENGINE = MergeTree()");
+		sqlBuilder.AppendLine("ORDER BY tuple();");
+
+		return sqlBuilder.ToString();
 	}
 
 	private string FormatNestedStructure(string fieldType, int indentLevel = 2)

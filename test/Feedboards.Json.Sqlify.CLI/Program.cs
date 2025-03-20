@@ -9,12 +9,12 @@ var client = new ClickHouseClient();
 
 //client.GenerateSQL(
 //	@"F:\Projects\src\Feedboards.Json.Sqlify\test\Feedboards.Json.Sqlify.CLI\test\adyawater.com_products_1.json",
-//	@"F:\Projects\src\Feedboards.Json.Sqlify\test\Feedboards.Json.Sqlify.CLI\test\test_2.sql",
-//	"test_2");
+//	@"F:\Projects\src\Feedboards.Json.Sqlify\test\Feedboards.Json.Sqlify.CLI\test\adyawater.com_products_1.sql",
+//	"products");
 
 client.GenerateSQL(
 	@"F:\Projects\src\Feedboards.Json.Sqlify\test\Feedboards.Json.Sqlify.CLI\test\SimpleTest\test.json",
-	@"F:\Projects\src\Feedboards.Json.Sqlify\test\Feedboards.Json.Sqlify.CLI\test\SimpleTest\test.sql",
+	@"F:\Projects\src\Feedboards.Json.Sqlify\test\Feedboards.Json.Sqlify.CLI\test\SimpleTest\test_2.sql",
 	"test");
 
 //client.GenerateSQL(
