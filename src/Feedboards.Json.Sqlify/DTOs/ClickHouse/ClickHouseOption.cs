@@ -2,7 +2,7 @@
 
 public class ClickHouseOption
 {
-	public string? PathToOutputFolder { get; set; } = string.Empty;
-	public string? PathToFolderWithJson {  get; set; } = string.Empty;
+	public string? PathToOutputFolder { get; set; } = null;
+	public string? PathToFolderWithJson {  get; set; } = null;
 	public ClickHouseDatabaseDetails? DatabaseDetails { get; set; } = null;
 }

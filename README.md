@@ -22,7 +22,7 @@ A .NET library for converting JSON data structures into SQL schemas and tables. 
 
 ```bash
 # Clone the repository
-git clone https://github.com/yourusername/Feedboards.Json.Sqlify.git
+git clone https://github.com/feedboards/Feedboards.Json.Sqlify.git
 cd Feedboards.Json.Sqlify
 
 # Build the solution
@@ -33,6 +33,159 @@ dotnet build
 
 ```bash
 dotnet add package Feedboards.Json.Sqlify
+```
+
+### Dependency Injection Setup
+
+The library supports dependency injection in ASP.NET Core applications. Add the following code to your `Program.cs` or `Startup.cs`:
+
+```csharp
+using Feedboards.Json.Sqlify.Infrastructure;
+using Feedboards.Json.Sqlify.DTOs.ClickHouse;
+
+// In your ConfigureServices method or Program.cs
+builder.Services.AddFeedboardsJsonSqlify(options =>
+{
+    // Configure ClickHouse options
+    options.UseCLickHouseSchema(new ClickHouseOption
+    {
+        // All properties are optional and default to null
+        PathToFolderWithJson = "path/to/json/files",  // Optional
+        PathToOutputFolder = "path/to/output",        // Optional
+
+        // Database details are optional and for future features
+        DatabaseDetails = new ClickHouseDatabaseDetails
+        {
+            Host = "localhost",     // Required if DatabaseDetails is provided
+            Port = 8123,            // Required if DatabaseDetails is provided
+            User = "default",       // Required if DatabaseDetails is provided
+            Password = "",          // Required if DatabaseDetails is provided
+            Database = "default"    // Required if DatabaseDetails is provided
+        }
+    });
+
+    // Or use minimal configuration
+    options.UseCLickHouseSchema(); // All options are optional
+});
+```
+
+Then you can inject and use the client in your services:
+
+```csharp
+public class YourService
+{
+    private readonly IClickHouseClient _clickHouseClient;
+
+    public YourService(IClickHouseClient clickHouseClient)
+    {
+        _clickHouseClient = clickHouseClient;
+    }
+
+    public void ProcessJsonFile(string tableName)
+    {
+        // Using direct file paths (no configuration needed)
+        var sqlSchema = _clickHouseClient.GenerateSQL(
+            jsonFolder: "path/to/input.json",
+            tableName: tableName
+        );
+
+        // Or using configured paths
+        _clickHouseClient.GenerateSQLAndWrite(tableName);
+    }
+}
+```
+
+### Configuration Options
+
+The `ClickHouseOption` class supports the following configuration:
+
+```csharp
+public class ClickHouseOption
+{
+    // Optional: Path to the folder containing JSON files
+    // Defaults to null if not provided
+    // Required only when using methods that read from files
+    public string? PathToFolderWithJson { get; set; } = null;
+
+    // Optional: Path where SQL files will be generated
+    // Defaults to null if not provided
+    // Required only when using methods that write to files
+    public string? PathToOutputFolder { get; set; } = null;
+
+    // Optional: Connection details for direct database operations
+    // Defaults to null if not provided
+    // Required only for future database integration features
+    public ClickHouseDatabaseDetails? DatabaseDetails { get; set; } = null;
+}
+
+// Database connection details class
+// All properties are required if DatabaseDetails is provided
+public class ClickHouseDatabaseDetails
+{
+    public required string Host { get; set; }
+    public required short Port { get; set; }
+    public required string User { get; set; }
+    public required string Password { get; set; }
+    public required string Database { get; set; }
+}
+```
+
+#### When to Provide Options
+
+1. For generating SQL schema as string:
+
+   - Provide `PathToFolderWithJson` when using configuration-based methods
+   - Or use direct file path methods which don't require configuration
+
+2. For writing SQL to files:
+
+   - Provide both `PathToFolderWithJson` and `PathToOutputFolder` when using configuration-based methods
+   - Or use direct file path methods which don't require configuration
+
+3. For database operations (planned feature):
+   - `DatabaseDetails` will be required with all its properties set
+
+#### Example Usage
+
+Without configuration (using direct paths):
+
+```csharp
+var client = new ClickHouseClient(); // No options needed
+client.GenerateSQL(
+    jsonFolder: "path/to/input.json",
+    tableName: "my_table"
+);
+```
+
+With configuration:
+
+```csharp
+var options = new ClickHouseOption
+{
+    PathToFolderWithJson = "path/to/json/files",
+    PathToOutputFolder = "path/to/output"
+};
+
+var client = new ClickHouseClient(options);
+client.GenerateSQL(tableName: "my_table");
+```
+
+With database details (for future features):
+
+```csharp
+var options = new ClickHouseOption
+{
+    DatabaseDetails = new ClickHouseDatabaseDetails
+    {
+        Host = "localhost",
+        Port = 8123,
+        User = "default",
+        Password = "",
+        Database = "default"
+    }
+};
+
+var client = new ClickHouseClient(options);
 ```
 
 ## Quick Start
