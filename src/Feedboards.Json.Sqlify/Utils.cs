@@ -4,18 +4,6 @@ internal class Utils
 {
 	internal static FileOrFolderChecker CheckPath(string path)
 	{
-		//if (Directory.Exists(path))
-		//{
-		//	return FileOrFolderChecker.Folder;
-		//}
-		//else if (File.Exists(path))
-		//{
-		//	return FileOrFolderChecker.File;
-		//}
-		//else
-		//{
-		//	throw new Exception(nameof(path));
-		//}
 		if (Directory.Exists(path))
 		{
 			return FileOrFolderChecker.Folder;
@@ -24,15 +12,24 @@ internal class Utils
 		{
 			return FileOrFolderChecker.File;
 		}
-		else if (Path.HasExtension(path))
-		{
-			// Path has an extension, so assume it's meant to be a file.
-			return FileOrFolderChecker.File;
-		}
 		else
 		{
-			// If it doesn't have an extension, assume it's meant to be a folder.
-			return FileOrFolderChecker.Folder;
+			// For non-existent paths, check if the parent directory exists
+			var parentDir = Path.GetDirectoryName(path);
+			if (parentDir != null && !Directory.Exists(parentDir))
+			{
+				throw new DirectoryNotFoundException($"Directory '{parentDir}' does not exist.");
+			}
+
+			// If parent directory exists, use extension to determine type
+			if (Path.HasExtension(path))
+			{
+				return FileOrFolderChecker.File;
+			}
+			else
+			{
+				return FileOrFolderChecker.Folder;
+			}
 		}
 	}
 }

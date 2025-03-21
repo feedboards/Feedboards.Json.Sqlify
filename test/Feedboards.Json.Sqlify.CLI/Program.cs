@@ -1,67 +1,149 @@
-﻿// See https://aka.ms/new-console-template for more information
 using Feedboards.Json.Sqlify.Clients.ClickHousel;
-using System.Net.Http.Headers;
-using System.Text;
+using Feedboards.Json.Sqlify.ErrorSystem.Exceptions;
+using Feedboards.Json.Sqlify.ErrorSystem;
+using Feedboards.Json.Sqlify.DTOs.ClickHouse;
+using CustomFileNotFoundException = Feedboards.Json.Sqlify.ErrorSystem.Exceptions.FileNotFoundException;
 
-Console.WriteLine("Hello, World!");
+Console.WriteLine("Testing error handling in ClickHouseClient...\n");
 
-var client = new ClickHouseClient();
+// Create a sample JSON file for testing
+var sampleJson = @"{
+    ""id"": 1,
+    ""name"": ""Test Product"",
+    ""price"": 10.99,
+    ""details"": {
+        ""color"": ""red"",
+        ""size"": ""large"",
+        ""nested"": {
+            ""level1"": {
+                ""level2"": {
+                    ""level3"": {
+                        ""level4"": {
+                            ""level5"": {
+                                ""level6"": {
+                                    ""level7"": {
+                                        ""level8"": {
+                                            ""level9"": {
+                                                ""level10"": {
+                                                    ""level11"": ""too deep""
+                                                }
+                                            }
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        }
+    }
+}";
+File.WriteAllText("F:/Projects/src/Feedboards.Json.Sqlify/test/Feedboards.Json.Sqlify.CLI/test/sample.json", sampleJson);
 
-//client.GenerateSQLAndWrite(
-//	@"F:\Projects\src\Feedboards.Json.Sqlify\test\Feedboards.Json.Sqlify.CLI\test\adyawater.com_products_1.json",
-//	@"F:\Projects\src\Feedboards.Json.Sqlify\test\Feedboards.Json.Sqlify.CLI\test\adyawater.com_products_1.sql",
-//	"products");
+var options = new ClickHouseOption
+{
+    PathToFolderWithJson = "F:/Projects/src/Feedboards.Json.Sqlify/test/Feedboards.Json.Sqlify.CLI/test/sample.json",
+    PathToOutputFolder = "F:/Projects/src/Feedboards.Json.Sqlify/test/Feedboards.Json.Sqlify.CLI/test/SQL/"
+};
 
-//client.GenerateSQLAndWrite(
-//	@"F:\Projects\src\Feedboards.Json.Sqlify\test\Feedboards.Json.Sqlify.CLI\test\SimpleTest\test.json",
-//	@"F:\Projects\src\Feedboards.Json.Sqlify\test\Feedboards.Json.Sqlify.CLI\test\SimpleTest\test_2.sql",
-//	"test");
+var client = new ClickHouseClient(options);
 
-var result = client.GenerateSQL(
-	@"F:\Projects\src\Feedboards.Json.Sqlify\test\Feedboards.Json.Sqlify.CLI\test\SimpleTest\test.json",
-	"test");
+Console.WriteLine("Test 1: Invalid table name with special characters");
+try
+{
+    client.GenerateSQL("F:/Projects/src/Feedboards.Json.Sqlify/test/Feedboards.Json.Sqlify.CLI/test/sample.json", "test@table");
+}
+catch (InvalidTableNameException ex)
+{
+    Console.WriteLine($"✓ Caught InvalidTableNameException: {ex.Message}");
+    Console.WriteLine($"Table name: {ex.Metadata["TableName"]}");
+}
 
-Console.WriteLine(result);
+Console.WriteLine("\nTest 2: Unlimited depth (should work with all levels)");
+try
+{
+    var sql = client.GenerateSQL("F:/Projects/src/Feedboards.Json.Sqlify/test/Feedboards.Json.Sqlify.CLI/test/sample.json", "products", 0);
+    Console.WriteLine($"✓ Successfully generated SQL with unlimited depth");
+    Console.WriteLine($"Generated SQL:\n{sql}");
+}
+catch (NestedStructureLimitException ex)
+{
+    Console.WriteLine($"✗ Failed: NestedStructureLimitException was thrown when it shouldn't have been");
+    Console.WriteLine($"Max allowed depth: {ex.Metadata["MaxAllowedDepth"]}");
+    Console.WriteLine($"Attempted depth: {ex.Metadata["ActualDepth"]}");
+}
 
-//client.GenerateSQLAndWrite(
-//	@"F:\Projects\src\Feedboards.Json.Sqlify\test\Feedboards.Json.Sqlify.CLI\test\JSON",
-//	@"F:\Projects\src\Feedboards.Json.Sqlify\test\Feedboards.Json.Sqlify.CLI\test\SQL");
+Console.WriteLine("\nTest 3: Invalid configuration - missing required option");
+try
+{
+    var invalidOptions = new ClickHouseOption(); // Empty options
+    var clientWithoutOptions = new ClickHouseClient(invalidOptions);
+}
+catch (InvalidConfigurationException ex)
+{
+    Console.WriteLine($"✓ Caught InvalidConfigurationException: {ex.Message}");
+    Console.WriteLine($"Missing configuration key: {ex.Metadata["ConfigKey"]}");
+}
 
+Console.WriteLine("\nTest 4: Invalid configuration - negative max depth (should work)");
+try
+{
+    var sql = client.GenerateSQL("F:/Projects/src/Feedboards.Json.Sqlify/test/Feedboards.Json.Sqlify.CLI/test/sample.json", "test_table", -1);
+    Console.WriteLine($"✓ Successfully generated SQL with negative depth (unlimited)");
+    Console.WriteLine($"Generated SQL:\n{sql}");
+}
+catch (InvalidConfigurationException ex)
+{
+    Console.WriteLine($"✗ Failed: InvalidConfigurationException was thrown when it shouldn't have been");
+    Console.WriteLine($"Configuration key: {ex.Metadata["ConfigKey"]}");
+}
 
-//var filePath = @"F:\Projects\src\Feedboards.Json.Sqlify\test\Feedboards.Json.Sqlify.CLI\test\SimpleTest\test.json";
-//var clickHouseUrl = "http://localhost:8123/?query=INSERT%20INTO%20my_first_table%20FORMAT%20JSONEachRow";
+Console.WriteLine("\nTest 5: Invalid JSON structure");
+try
+{
+    var invalidJson = @"{
+        ""array"": [1, 2, 3,] // Invalid trailing comma
+    }";
+    File.WriteAllText("F:/Projects/src/Feedboards.Json.Sqlify/test/Feedboards.Json.Sqlify.CLI/test/invalid.json", invalidJson);
+    try
+    {
+        client.GenerateSQL("F:/Projects/src/Feedboards.Json.Sqlify/test/Feedboards.Json.Sqlify.CLI/test/invalid.json", "test");
+    }
+    catch (InvalidJsonStructureException ex)
+    {
+        Console.WriteLine($"✓ Caught InvalidJsonStructureException: {ex.Message}");
+        Console.WriteLine($"JSON file path: {ex.Metadata["JsonPath"]}");
+        if (ex.InnerException != null)
+        {
+            Console.WriteLine($"Inner exception: {ex.InnerException.Message}");
+        }
+    }
+    finally
+    {
+        if (File.Exists("F:/Projects/src/Feedboards.Json.Sqlify/test/Feedboards.Json.Sqlify.CLI/test/invalid.json"))
+        {
+            File.Delete("F:/Projects/src/Feedboards.Json.Sqlify/test/Feedboards.Json.Sqlify.CLI/test/invalid.json");
+        }
+    }
+}
+catch (CustomFileNotFoundException ex)
+{
+    Console.WriteLine($"✓ Caught FileNotFoundException: {ex.Message}");
+    Console.WriteLine($"File path: {ex.Metadata["FilePath"]}");
+    Console.WriteLine($"Reason: {ex.Metadata["Reason"]}");
+}
 
-//// Set your ClickHouse credentials
-//var username = "default";
-//var password = "clickhouse";  // Replace with your actual password
+Console.WriteLine("\nTest 6: File not found");
+try
+{
+    client.GenerateSQL("F:/Projects/src/Feedboards.Json.Sqlify/test/Feedboards.Json.Sqlify.CLI/test/nonexistent.json", "test");
+}
+catch (CustomFileNotFoundException ex)
+{
+    Console.WriteLine($"✓ Caught FileNotFoundException: {ex.Message}");
+    Console.WriteLine($"File path: {ex.Metadata["FilePath"]}");
+    Console.WriteLine($"Reason: {ex.Metadata["Reason"]}");
+}
 
-//try
-//{
-//	using var client = new HttpClient();
-
-//	// Add basic authentication header
-//	var authToken = Convert.ToBase64String(Encoding.ASCII.GetBytes($"{username}:{password}"));
-//	client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Basic", authToken);
-
-//	// Read JSON file content
-//	var jsonContent = await File.ReadAllTextAsync(filePath);
-//	var content = new StringContent(jsonContent);
-//	content.Headers.ContentType = new MediaTypeHeaderValue("application/json");
-
-//	// Post JSON data to ClickHouse
-//	var response = await client.PostAsync(clickHouseUrl, content);
-//	var responseText = await response.Content.ReadAsStringAsync();
-
-//	if (response.IsSuccessStatusCode)
-//	{
-//		Console.WriteLine("Data loaded successfully.");
-//	}
-//	else
-//	{
-//		Console.WriteLine($"Error loading data: {responseText}");
-//	}
-//}
-//catch (Exception ex)
-//{
-//	Console.WriteLine($"Exception occurred: {ex.Message}");
-//}
+Console.WriteLine("\nAll error tests completed!"); 

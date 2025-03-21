@@ -1,0 +1,32 @@
+{
+    "id": 1,
+    "name": "Test Product",
+    "price": 10.99,
+    "details": {
+        "color": "red",
+        "size": "large",
+        "nested": {
+            "level1": {
+                "level2": {
+                    "level3": {
+                        "level4": {
+                            "level5": {
+                                "level6": {
+                                    "level7": {
+                                        "level8": {
+                                            "level9": {
+                                                "level10": {
+                                                    "level11": "too deep"
+                                                }
+                                            }
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        }
+    }
+}

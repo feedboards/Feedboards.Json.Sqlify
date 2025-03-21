@@ -1,6 +1,7 @@
 ﻿using System.Data;
 using System.Globalization;
 using System.Text.Json;
+using Feedboards.Json.Sqlify.ErrorSystem.Exceptions;
 
 namespace Feedboards.Json.Sqlify.JSON.ClickHouse;
 
@@ -14,9 +15,9 @@ internal class ClickHouseJsonAnalyzer
 	{
 		var structure = new Dictionary<string, string>();
 
-		if (currentDepth >= maxDepth)
+		if (maxDepth > 0 && currentDepth >= maxDepth)
 		{
-			return structure;
+			throw new NestedStructureLimitException(maxDepth, currentDepth);
 		}
 
 		// Handle root-level array
