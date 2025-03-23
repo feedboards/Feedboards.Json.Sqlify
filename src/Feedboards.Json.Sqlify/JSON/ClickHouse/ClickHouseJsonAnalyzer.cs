@@ -115,10 +115,6 @@ internal class ClickHouseJsonAnalyzer
 							{
 								structure[fieldPath] = "Array(Float64)";
 							}
-							else if (types.All(t => t == "DateTime64(3)"))
-							{
-								structure[fieldPath] = "Array(DateTime64(3))";
-							}
 							else
 							{
 								structure[fieldPath] = "Array(String)";
@@ -167,28 +163,6 @@ internal class ClickHouseJsonAnalyzer
 			{
 				return "Float64";
 			}
-		}
-		else if (value.ValueKind == JsonValueKind.String)
-		{
-			var str = value.GetString();
-			if (!string.IsNullOrEmpty(str))
-			{
-				if (str.Length >= 19 && str[4] == '-' && str[7] == '-' && (str[10] == 'T' || str[10] == ' ') && str[13] == ':' && str[16] == ':')
-				{
-					if (DateTime.TryParse(str, out _))
-					{
-						return "DateTime64(3)";
-					}
-				}
-				else if (str.Length == 10 && str[4] == '-' && str[7] == '-')
-				{
-					if (DateTime.TryParseExact(str, "yyyy-MM-dd", CultureInfo.InvariantCulture, DateTimeStyles.None, out _))
-					{
-						return "Date";
-					}
-				}
-			}
-			return "String";
 		}
 		else
 		{
