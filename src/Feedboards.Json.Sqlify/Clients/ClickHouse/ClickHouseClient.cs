@@ -75,12 +75,13 @@ public class ClickHouseClient : IClickHouseClient
 			var jsonData = document.RootElement;
 
 			var jsonAnalyzer = new ClickHouseJsonAnalyzer();
-
-			var structure = jsonAnalyzer.AnalyzeJsonStructure(jsonData, "", maxDepth ?? 10, 0);
-
 			var sqlBuilder = new ClickHouseSQLBuilder();
 
-			return sqlBuilder.GenerateClickHouseSchema(structure, tableName);
+			// First analyze the JSON structure without depth validation
+			var structure = jsonAnalyzer.AnalyzeJsonStructure(jsonData, "", 0, 0); // Use 0 to skip JSON depth validation
+
+			// Then validate SQL nesting depth
+			return sqlBuilder.GenerateClickHouseSchema(structure, tableName, maxDepth ?? 10);
 		}
 		catch (System.IO.FileNotFoundException ex)
 		{

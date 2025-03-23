@@ -17,7 +17,9 @@ internal class ClickHouseJsonAnalyzer
 
 		if (maxDepth > 0 && currentDepth >= maxDepth)
 		{
-			throw new NestedStructureLimitException(maxDepth, currentDepth);
+			throw new NestedStructureLimitException(
+				actualDepth: currentDepth,
+				maxAllowedDepth: maxDepth);
 		}
 
 		// Handle root-level array

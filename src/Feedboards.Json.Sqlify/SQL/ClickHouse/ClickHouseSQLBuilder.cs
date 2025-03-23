@@ -1,5 +1,6 @@
 ﻿namespace Feedboards.Json.Sqlify.SQL.ClickHouse;
 using System.Text;
+using Feedboards.Json.Sqlify.ErrorSystem.Exceptions;
 
 internal class ClickHouseSQLBuilder
 {
@@ -20,8 +21,31 @@ internal class ClickHouseSQLBuilder
 		return false;
 	}
 
-	public string GenerateClickHouseSchema(Dictionary<string, string> structure, string tableName)
+	private void ValidateSQLNesting(Dictionary<string, string> structure, string tableName, int maxDepth)
 	{
+		if (maxDepth <= 0) return; // Skip validation for unlimited depth
+
+		foreach (var kvp in structure)
+		{
+			if (kvp.Value.StartsWith("Nested("))
+			{
+				var nestedCount = kvp.Value.Split(new[] { "Nested(" }, StringSplitOptions.None).Length - 1;
+				if (nestedCount > maxDepth)
+				{
+					throw new NestedStructureLimitException(
+						actualDepth: nestedCount,
+						maxAllowedDepth: maxDepth,
+						tableName: tableName,
+						nestedField: kvp.Key);
+				}
+			}
+		}
+	}
+
+	public string GenerateClickHouseSchema(Dictionary<string, string> structure, string tableName, int maxDepth = 10)
+	{
+		ValidateSQLNesting(structure, tableName, maxDepth);
+
 		var schemaLines = new List<string>();
 		var processedFields = new HashSet<string>();
 		var needsFlattenNested = HasNestedInNested(structure);
@@ -162,9 +186,6 @@ internal class ClickHouseSQLBuilder
 			}
 		}
 
-		var fieldsString = string.Join($",\n{baseIndent}", formattedFields);
-		var reducedIndent = new string(' ', (indentLevel - 1) * 4);
-		
-		return $"Nested(\n{baseIndent}{fieldsString}\n{reducedIndent})";
+		return $"Nested(\n{baseIndent}{string.Join($",\n{baseIndent}", formattedFields)}\n{new string(' ', (indentLevel - 1) * 4)})";
 	}
 }

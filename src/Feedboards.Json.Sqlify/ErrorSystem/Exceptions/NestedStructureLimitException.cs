@@ -3,34 +3,28 @@
 	public class NestedStructureLimitException : FeedboardsJsonSqlifyException
 	{
 		public NestedStructureLimitException(
-			int? actualDepth = null,
-			int? maxAllowedDepth = null,
+			int actualDepth,
+			int maxAllowedDepth,
 			string? tableName = null,
 			string? nestedField = null,
 			Exception? innerException = null)
 			: base(
-				errorCode: tableName != null ? ErrorCodes.NestedStructureLimit : ErrorCodes.InvalidJsonStructure,
+				errorCode: tableName != null ? ErrorCodes.NestedStructureLimit : ErrorCodes.JsonNestedStructureLimit,
 				message: BuildMessage(actualDepth, maxAllowedDepth, tableName, nestedField),
 				innerException,
 				metadata: BuildMetadata(actualDepth, maxAllowedDepth, tableName, nestedField))
 		{
 		}
 
-		private static string BuildMessage(int? actual, int? max, string? tableName = null, string? nestedField = null)
+		private static string BuildMessage(int actual, int max, string? tableName = null, string? nestedField = null)
 		{
-			var baseMessage = ErrorCodes.GetErrorMessage(tableName != null ? ErrorCodes.NestedStructureLimit : ErrorCodes.InvalidJsonStructure);
+			var baseMessage = ErrorCodes.GetErrorMessage(
+				tableName != null ? ErrorCodes.NestedStructureLimit : ErrorCodes.JsonNestedStructureLimit);
 
 			var details = new List<string>();
 
-			if (actual != null)
-			{
-				details.Add($"Actual depth: {actual}");
-			}
-
-			if (max != null)
-			{
-				details.Add($"Maximum allowed: {max}");
-			}
+			details.Add($"Actual depth: {actual}");
+			details.Add($"Maximum allowed: {max}");
 
 			if (tableName != null)
 			{
@@ -42,24 +36,16 @@
 				details.Add($"Field: {nestedField}");
 			}
 
-			return details.Count > 0
-				? $"{baseMessage}. {string.Join(", ", details)}"
-				: baseMessage;
+			return $"{baseMessage}. {string.Join(", ", details)}";
 		}
 
-		private static IDictionary<string, object>? BuildMetadata(int? actual, int? max, string? tableName = null, string? nestedField = null)
+		private static IDictionary<string, object> BuildMetadata(int actual, int max, string? tableName = null, string? nestedField = null)
 		{
-			var metadata = new Dictionary<string, object>();
-
-			if (actual != null)
+			var metadata = new Dictionary<string, object>
 			{
-				metadata["ActualDepth"] = actual;
-			}
-
-			if (max != null)
-			{
-				metadata["MaxAllowedDepth"] = max;
-			}
+				["ActualDepth"] = actual,
+				["MaxAllowedDepth"] = max
+			};
 
 			if (tableName != null)
 			{
@@ -71,7 +57,7 @@
 				metadata["NestedField"] = nestedField;
 			}
 
-			return metadata.Count > 0 ? metadata : null;
+			return metadata;
 		}
 	}
 }

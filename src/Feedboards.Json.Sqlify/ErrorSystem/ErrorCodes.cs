@@ -8,7 +8,8 @@
 			InvalidConfiguration => "Invalid configuration provided",
 			FileNotFound => "File not found at specified path", //
 			InvalidTableName => "Invalid table name provided",
-			NestedStructureLimit => "Nested structure exceeds maximum depth",
+			NestedStructureLimit => "SQL nested structure exceeds maximum depth",
+			JsonNestedStructureLimit => "JSON nested structure exceeds maximum depth",
 			DatabaseConnectionFailed => "Failed to connect to database",
 			UnknownError => "An unknown error occurred",
 			_ => "An unknown error occurred"
@@ -18,6 +19,7 @@
 		public const string InvalidConfiguration = "CFG_001";
 		public const string InvalidTableName = "TBL_001";
 		public const string InvalidJsonStructure = "JSN_001";
+		public const string JsonNestedStructureLimit = "JSN_002";
 		public const string DatabaseConnectionFailed = "DB_001";
 		public const string UnknownError = "UNK_001";
 		public const string NestedStructureLimit = "SQL_001";

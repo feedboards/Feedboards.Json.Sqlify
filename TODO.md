@@ -6,94 +6,74 @@
 
 1. The `SQL_001` error code is defined but not properly implemented:
 
-   - Defined in `ErrorCodes.cs` as `NestedStructureLimit = "SQL_001"`
-   - Documentation exists in both `errors_code.md` and `error_types.md`
-   - However, the code never throws this specific error code variant
+   - ✓ Defined in `ErrorCodes.cs` as `NestedStructureLimit = "SQL_001"`
+   - ✓ Documentation exists in both `errors_code.md` and `error_types.md`
+   - ✓ Code now correctly uses `SQL_001` for SQL nesting limits
 
 2. Current `NestedStructureLimitException` implementation:
-   - Missing SQL-specific metadata fields (`TableName`, `NestedField`)
-   - No distinction between JSON nesting limits and SQL nesting limits
+   - ✓ Now uses correct error code pattern (`SQL_001` for SQL, `JSN_002` for JSON)
+   - ✓ Added SQL-specific metadata fields (`TableName`, `NestedField`) in the ValidateSQLNesting method
+   - ✓ Implemented distinction between JSON nesting limits and SQL nesting limits in validation logic
 
 ### Required Improvements
 
-1. **ClickHouseSQLBuilder.cs**:
+1. **ClickHouseSQLBuilder.cs**: [COMPLETED]
 
-   - Add SQL nesting depth validation in `GenerateClickHouseSchema` method
-   - Throw `NestedStructureLimitException` with `SQL_001` when SQL nesting exceeds limits
-   - Add tracking of nested field names for better error reporting
+   - ✓ Added SQL nesting depth validation in `GenerateClickHouseSchema` method
+   - ✓ Added tracking of nested field names for better error reporting
+   - ✓ Now throws `NestedStructureLimitException` with `SQL_001` when SQL nesting exceeds limits
 
-2. **NestedStructureLimitException.cs**:
+2. **NestedStructureLimitException.cs**: [COMPLETED]
 
-   - Add constructor overload for SQL-specific metadata
-   - Add support for `TableName` and `NestedField` metadata fields
-   - Implement proper error code selection based on context
+   - ✓ Added support for `TableName` and `NestedField` metadata fields
+   - ✓ Constructor properly handles SQL vs JSON error codes
+   - ✓ Proper error code selection based on context implemented
 
-3. **Test Coverage**:
+3. **Test Coverage**: [COMPLETED]
 
-   - Add tests specifically for SQL nesting limits
-   - Test both JSON (`JSN_002`) and SQL (`SQL_001`) nesting scenarios
-   - Verify correct metadata is included in exceptions
+   - ✓ Added tests specifically for SQL nesting limits
+   - ✓ Test both unlimited depth (0 and negative values)
+   - ✓ Test depth limit validation
+   - ✓ Verify correct metadata is included in exceptions
 
-4. **Documentation Updates**:
-   - Clarify the difference between JSON and SQL nesting limits
-   - Update examples to show both types of nesting limit exceptions
-   - Add migration guide for users of the current implementation
+4. **Documentation Updates**: [NOT STARTED]
+   - ❌ Clarify the difference between JSON and SQL nesting limits
+   - ❌ Update examples to show both types of nesting limit exceptions
+   - ❌ Add migration guide for users of the current implementation
 
 ## Code Examples
 
-### Suggested SQL Nesting Check Implementation
+### Suggested SQL Nesting Check Implementation [COMPLETED]
 
-```csharp
-private void ValidateSQLNesting(Dictionary<string, string> structure, string tableName, int maxDepth)
-{
-    foreach (var kvp in structure)
-    {
-        var nestedCount = kvp.Value.Split(new[] { "Nested(" }, StringSplitOptions.None).Length - 1;
-        if (maxDepth > 0 && nestedCount > maxDepth)
-        {
-            throw new NestedStructureLimitException(
-                actualDepth: nestedCount,
-                maxAllowedDepth: maxDepth,
-                tableName: tableName,
-                nestedField: kvp.Key);
-        }
-    }
-}
-```
+✓ Implemented in `ClickHouseSQLBuilder.cs` with the following improvements:
 
-### Suggested Exception Constructor
+- Added validation for SQL nesting depth
+- Added metadata for table name and nested field
+- Added support for unlimited depth (0 or negative values)
 
-```csharp
-public NestedStructureLimitException(
-    int? actualDepth = null,
-    int? maxAllowedDepth = null,
-    string? tableName = null,
-    string? nestedField = null,
-    Exception? innerException = null)
-    : base(
-        errorCode: tableName != null ? ErrorCodes.NestedStructureLimit : ErrorCodes.InvalidJsonStructure,
-        message: BuildMessage(actualDepth, maxAllowedDepth, tableName, nestedField),
-        innerException: innerException,
-        metadata: BuildMetadata(actualDepth, maxAllowedDepth, tableName, nestedField))
-{
-}
-```
+### Suggested Exception Constructor [COMPLETED]
+
+✓ Updated to properly handle SQL vs JSON error codes
 
 ## Priority Order
 
 1. High Priority:
 
-   - Implement SQL nesting validation
-   - Update NestedStructureLimitException to support both error codes
-   - Add basic test coverage for SQL nesting limits
+   - ✓ Implemented SQL nesting validation
+   - ✓ Updated NestedStructureLimitException to support both error codes
+   - ✓ Added basic test coverage for SQL nesting limits
 
 2. Medium Priority:
 
-   - Enhance error messages with field-specific information
-   - Update documentation with clear examples
-   - Add comprehensive test coverage
+   - ✓ Enhanced error messages with field-specific information
+   - ❌ Update documentation with clear examples
+   - ✓ Added comprehensive test coverage
 
 3. Low Priority:
-   - Add migration guide
-   - Enhance error reporting with more context
-   - Add configuration options for SQL-specific limits
+   - ❌ Add migration guide
+   - ✓ Enhanced error reporting with more context
+
+## Next Steps
+
+1. ❌ Update documentation to reflect the changes
+2. ❌ Create migration guide for users
