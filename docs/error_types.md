@@ -124,18 +124,27 @@ catch (InvalidJsonStructureException ex)
 }
 ```
 
-### NestedStructureLimitException (JSON)
+### NestedStructureLimitException
 
-Thrown when JSON nesting exceeds the configured depth limit.
+Base exception for nesting depth validation. This exception has two distinct use cases with different error codes:
 
-**Error Code:** `JSN_002`
+1. **JSON Structure Validation (JSN_002)**
 
-**Use Cases:**
+   - Validates raw JSON structure depth
+   - Thrown during initial JSON parsing
+   - Focuses on data structure complexity
 
-- JSON structure is deeper than allowed maximum depth
-- Complex nested objects exceed depth limit
+2. **SQL Structure Validation (SQL_001)**
+   - Validates generated SQL nesting depth
+   - Thrown during SQL schema generation
+   - Focuses on database compatibility
 
-**Example:**
+**Common Properties:**
+
+- `MaxAllowedDepth`: Maximum allowed nesting depth
+- `ActualDepth`: Actual depth encountered
+
+**Example - JSON Validation:**
 
 ```csharp
 try
@@ -147,21 +156,11 @@ catch (NestedStructureLimitException ex) when (ex.ErrorCode == "JSN_002")
     // Access error details
     var maxDepth = ex.Metadata["MaxAllowedDepth"];
     var actualDepth = ex.Metadata["ActualDepth"];
+    Console.WriteLine($"JSON structure too deep: {actualDepth} levels (max: {maxDepth})");
 }
 ```
 
-### NestedStructureLimitException (SQL)
-
-Thrown when SQL nesting exceeds the configured depth limit during SQL generation.
-
-**Error Code:** `SQL_001`
-
-**Use Cases:**
-
-- Generated SQL structure is deeper than allowed maximum depth
-- Complex nested fields exceed SQL nesting limit
-
-**Example:**
+**Example - SQL Validation:**
 
 ```csharp
 try
@@ -175,8 +174,18 @@ catch (NestedStructureLimitException ex) when (ex.ErrorCode == "SQL_001")
     var actualDepth = ex.Metadata["ActualDepth"];
     var tableName = ex.Metadata["TableName"];
     var nestedField = ex.Metadata["NestedField"];
+
+    Console.WriteLine($"SQL nesting too deep in table {tableName}");
+    Console.WriteLine($"Field {nestedField} has depth {actualDepth} (max: {maxDepth})");
 }
 ```
+
+**Depth Configuration:**
+
+- Positive number (e.g., `maxDepth: 5`): Limits nesting to that depth
+- Zero (`maxDepth: 0`): Unlimited depth
+- Negative number (e.g., `maxDepth: -1`): Same as zero, unlimited depth
+- Default (not specified): Limits to 10 levels
 
 ### DatabaseConnectionFailedException
 

@@ -14,8 +14,10 @@ A .NET library for converting JSON data structures into SQL schemas and tables. 
 - Handles both single files and directories of JSON files
 - Configurable maximum depth for nested structures (including unlimited depth)
 - Automatic type detection and mapping to database-specific data types
-- Support for ClickHouse Nested type structures
+  - All date-related fields are mapped to String type for maximum compatibility
+  - Support for ClickHouse Nested type structures
 - Comprehensive error handling system with detailed error codes
+- Separate validation for SQL and JSON nesting depths
 - Planned support for multiple databases:
   - ClickHouse (current)
   - MSSQL (planned)
@@ -226,21 +228,42 @@ try
 
     var client = new ClickHouseClient(options);
 
-    // Generate SQL from a single JSON file
+    // Generate SQL from a single JSON file with nesting validation
     client.GenerateSQL(
         jsonFolder: "path/to/input.json",
         outputFolder: "path/to/output.sql",
         tableName: "my_table",
-        maxDepth: 10  // Optional, defaults to 10, use 0 for unlimited
+        maxDepth: 5  // Limit nesting to 5 levels
     );
 
-    // Or process an entire directory of JSON files
+    // Use unlimited depth with maxDepth: 0
+    client.GenerateSQL(
+        jsonFolder: "path/to/input.json",
+        outputFolder: "path/to/output.sql",
+        tableName: "my_table",
+        maxDepth: 0  // No nesting limit
+    );
+
+    // Process an entire directory with default depth (10)
     client.GenerateSQL(
         jsonFolder: "path/to/json/folder",
         outputFolder: "path/to/sql/folder"
     );
-    // Note: When processing a directory, table names will be derived from JSON filenames.
-    // Avoid using special characters (like dots) in filenames.
+}
+catch (NestedStructureLimitException ex) when (ex.ErrorCode == "SQL_001")
+{
+    // Handle SQL nesting limit exceeded
+    Console.WriteLine($"SQL nesting limit exceeded in table {ex.Metadata["TableName"]}");
+    Console.WriteLine($"Field: {ex.Metadata["NestedField"]}");
+    Console.WriteLine($"Actual depth: {ex.Metadata["ActualDepth"]}");
+    Console.WriteLine($"Maximum allowed: {ex.Metadata["MaxAllowedDepth"]}");
+}
+catch (NestedStructureLimitException ex) when (ex.ErrorCode == "JSN_002")
+{
+    // Handle JSON nesting limit exceeded
+    Console.WriteLine($"JSON nesting limit exceeded");
+    Console.WriteLine($"Actual depth: {ex.Metadata["ActualDepth"]}");
+    Console.WriteLine($"Maximum allowed: {ex.Metadata["MaxAllowedDepth"]}");
 }
 catch (FeedboardsJsonSqlifyException ex)
 {
@@ -358,7 +381,7 @@ For support, please:
 
 ## Roadmap
 
-- [ ] Add an advanced error system
+- [x] Add an advanced error system
 - [ ] Add support for MSSQL
 - [ ] Add support for PostgreSQL
 - [ ] Add support for MySQL

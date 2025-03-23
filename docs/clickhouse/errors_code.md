@@ -75,9 +75,9 @@ Thrown when a connection to the ClickHouse database cannot be established.
 - `Database`: The database name
 - `InnerException`: Details about the connection failure
 
-### SQL_001: Nested Structure Limit
+### SQL_001: SQL Nesting Structure Limit
 
-Thrown when the generated SQL structure exceeds the maximum allowed nesting depth.
+Thrown when the generated SQL structure exceeds the maximum allowed nesting depth. This error occurs during SQL schema generation and is separate from JSON structure validation (JSN_002).
 
 **Metadata:**
 
@@ -85,6 +85,42 @@ Thrown when the generated SQL structure exceeds the maximum allowed nesting dept
 - `ActualDepth`: The actual depth in the generated SQL
 - `TableName`: The name of the table being generated
 - `NestedField`: The name of the field where the limit was exceeded
+
+**Example:**
+
+```csharp
+try
+{
+    // Limit SQL nesting to 2 levels
+    client.GenerateSQL("complex.json", "my_table", maxDepth: 2);
+}
+catch (NestedStructureLimitException ex) when (ex.ErrorCode == "SQL_001")
+{
+    Console.WriteLine($"SQL nesting too deep in table {ex.Metadata["TableName"]}");
+    Console.WriteLine($"Field {ex.Metadata["NestedField"]} has depth {ex.Metadata["ActualDepth"]}");
+    Console.WriteLine($"Maximum allowed depth: {ex.Metadata["MaxAllowedDepth"]}");
+}
+```
+
+**Depth Configuration:**
+
+- `maxDepth > 0`: Limits nesting to specified depth
+- `maxDepth = 0`: No depth limit
+- `maxDepth < 0`: No depth limit (same as 0)
+- Default: 10 levels
+
+**Common Scenarios:**
+
+1. Complex JSON structures with multiple levels of nesting
+2. Arrays of nested objects
+3. Deeply nested object hierarchies
+
+**Prevention:**
+
+1. Review your JSON data structure
+2. Consider flattening deeply nested structures
+3. Use appropriate depth limits for your use case
+4. Set `maxDepth: 0` if unlimited nesting is required
 
 ### UNK_001: Unknown Error
 
