@@ -8,12 +8,12 @@ using CustomFileNotFoundException = Feedboards.Json.Sqlify.ErrorSystem.Exception
 using System.Text.Json;
 using Feedboards.Json.Sqlify.Clients.ClickHousel;
 
-// var client = new ClickHouseClient();
+ var client = new ClickHouseClient();
 
-// client.GenerateSQLAndWrite(
-// 	"F:\\Projects\\src\\Feedboards.Json.Sqlify\\test\\Feedboards.Json.Sqlify.CLI\\test\\adyawater.com_products_1.json",
-// 	"F:\\Projects\\src\\Feedboards.Json.Sqlify\\test\\Feedboards.Json.Sqlify.CLI\\test\\adyawater_1.sql",
-// 	"test");
+client.GenerateSQLAndWrite(
+	"F:\\Projects\\src\\RetailLink\\python\\data\\MRF_index\\2025-03-01_7-ELEVEN-INC_index.json",
+	"F:\\Projects\\src\\Feedboards.Json.Sqlify\\test\\Feedboards.Json.Sqlify.CLI\\test\\MRF\\2025-03-01_7-ELEVEN-INC_index.sql",
+    "eleven_inc_index");
 
 //Console.WriteLine("Testing error handling in ClickHouseClient...\n");
 
@@ -159,131 +159,131 @@ using Feedboards.Json.Sqlify.Clients.ClickHousel;
 
 //Console.WriteLine("\nAll error tests completed!");
 
-const string TEST_FOLDER = @"F:\Projects\src\Feedboards.Json.Sqlify\test\Feedboards.Json.Sqlify.CLI\test";
+//const string TEST_FOLDER = @"F:\Projects\src\Feedboards.Json.Sqlify\test\Feedboards.Json.Sqlify.CLI\test";
 
-// Test case: Nesting limit validation
-Console.WriteLine("\nTest case: Testing nesting limit validation");
+//// Test case: Nesting limit validation
+//Console.WriteLine("\nTest case: Testing nesting limit validation");
 
-// Test 1: SQL nesting limit
-Console.WriteLine("\n1. Testing SQL nesting limit (should fail)");
-try
-{
-    var sqlOptions = new ClickHouseOption
-    {
-        PathToFolderWithJson = TEST_FOLDER
-    };
+//// Test 1: SQL nesting limit
+//Console.WriteLine("\n1. Testing SQL nesting limit (should fail)");
+//try
+//{
+//    var sqlOptions = new ClickHouseOption
+//    {
+//        PathToFolderWithJson = TEST_FOLDER
+//    };
 
-    var sqlClient = new ClickHouseClient(sqlOptions);
-    var jsonContent = @"{
-        ""level1"": {
-            ""array"": [
-                {
-                    ""level2"": {
-                        ""array"": [
-                            {
-                                ""level3"": {
-                                    ""value"": 42
-                                }
-                            }
-                        ]
-                    }
-                }
-            ]
-        }
-    }";
+//    var sqlClient = new ClickHouseClient(sqlOptions);
+//    var jsonContent = @"{
+//        ""level1"": {
+//            ""array"": [
+//                {
+//                    ""level2"": {
+//                        ""array"": [
+//                            {
+//                                ""level3"": {
+//                                    ""value"": 42
+//                                }
+//                            }
+//                        ]
+//                    }
+//                }
+//            ]
+//        }
+//    }";
 
-    var deepJsonPath = Path.Combine(TEST_FOLDER, "deep.json");
-    File.WriteAllText(deepJsonPath, jsonContent);
-    sqlClient.GenerateSQL(deepJsonPath, "test_table", 1); // Set maxDepth to 1
-    Console.WriteLine("✗ Failed: Expected NestedStructureLimitException was not thrown");
-}
-catch (NestedStructureLimitException ex)
-{
-    Console.WriteLine("✓ Caught expected NestedStructureLimitException");
-    Console.WriteLine($"Error Code: {ex.ErrorCode}");
-    Console.WriteLine($"Message: {ex.Message}");
-    Console.WriteLine("Metadata:");
-    foreach (var meta in ex.Metadata)
-    {
-        Console.WriteLine($"  {meta.Key}: {meta.Value}");
-    }
-}
+//    var deepJsonPath = Path.Combine(TEST_FOLDER, "deep.json");
+//    File.WriteAllText(deepJsonPath, jsonContent);
+//    sqlClient.GenerateSQL(deepJsonPath, "test_table", 1); // Set maxDepth to 1
+//    Console.WriteLine("✗ Failed: Expected NestedStructureLimitException was not thrown");
+//}
+//catch (NestedStructureLimitException ex)
+//{
+//    Console.WriteLine("✓ Caught expected NestedStructureLimitException");
+//    Console.WriteLine($"Error Code: {ex.ErrorCode}");
+//    Console.WriteLine($"Message: {ex.Message}");
+//    Console.WriteLine("Metadata:");
+//    foreach (var meta in ex.Metadata)
+//    {
+//        Console.WriteLine($"  {meta.Key}: {meta.Value}");
+//    }
+//}
 
-// Test 2: JSON nesting limit
-Console.WriteLine("\n2. Testing JSON nesting limit (should fail)");
-try
-{
-    var jsonContent = @"{
-        ""level1"": {
-            ""level2"": {
-                ""level3"": {
-                    ""level4"": {
-                        ""value"": 42
-                    }
-                }
-            }
-        }
-    }";
+//// Test 2: JSON nesting limit
+//Console.WriteLine("\n2. Testing JSON nesting limit (should fail)");
+//try
+//{
+//    var jsonContent = @"{
+//        ""level1"": {
+//            ""level2"": {
+//                ""level3"": {
+//                    ""level4"": {
+//                        ""value"": 42
+//                    }
+//                }
+//            }
+//        }
+//    }";
 
-    var deepJsonPath = Path.Combine(TEST_FOLDER, "deep_json.json");
-    File.WriteAllText(deepJsonPath, jsonContent);
-    var sqlOptions = new ClickHouseOption
-    {
-        PathToFolderWithJson = TEST_FOLDER
-    };
+//    var deepJsonPath = Path.Combine(TEST_FOLDER, "deep_json.json");
+//    File.WriteAllText(deepJsonPath, jsonContent);
+//    var sqlOptions = new ClickHouseOption
+//    {
+//        PathToFolderWithJson = TEST_FOLDER
+//    };
 
-    var sqlClient = new ClickHouseClient(sqlOptions);
-    sqlClient.GenerateSQL(deepJsonPath, "test_table", 2); // Set maxDepth to 2
-    Console.WriteLine("✗ Failed: Expected NestedStructureLimitException was not thrown");
-}
-catch (NestedStructureLimitException ex)
-{
-    Console.WriteLine("✓ Caught expected NestedStructureLimitException");
-    Console.WriteLine($"Error Code: {ex.ErrorCode}");
-    Console.WriteLine($"Message: {ex.Message}");
-    Console.WriteLine("Metadata:");
-    foreach (var meta in ex.Metadata)
-    {
-        Console.WriteLine($"  {meta.Key}: {meta.Value}");
-    }
-}
+//    var sqlClient = new ClickHouseClient(sqlOptions);
+//    sqlClient.GenerateSQL(deepJsonPath, "test_table", 2); // Set maxDepth to 2
+//    Console.WriteLine("✗ Failed: Expected NestedStructureLimitException was not thrown");
+//}
+//catch (NestedStructureLimitException ex)
+//{
+//    Console.WriteLine("✓ Caught expected NestedStructureLimitException");
+//    Console.WriteLine($"Error Code: {ex.ErrorCode}");
+//    Console.WriteLine($"Message: {ex.Message}");
+//    Console.WriteLine("Metadata:");
+//    foreach (var meta in ex.Metadata)
+//    {
+//        Console.WriteLine($"  {meta.Key}: {meta.Value}");
+//    }
+//}
 
-// Test 3: Unlimited depth (should succeed)
-Console.WriteLine("\n3. Testing unlimited depth (should succeed)");
-try
-{
-    var sqlOptions = new ClickHouseOption
-    {
-        PathToFolderWithJson = TEST_FOLDER
-    };
+//// Test 3: Unlimited depth (should succeed)
+//Console.WriteLine("\n3. Testing unlimited depth (should succeed)");
+//try
+//{
+//    var sqlOptions = new ClickHouseOption
+//    {
+//        PathToFolderWithJson = TEST_FOLDER
+//    };
 
-    var sqlClient = new ClickHouseClient(sqlOptions);
-    var deepJsonPath = Path.Combine(TEST_FOLDER, "deep.json");
-    var sql = sqlClient.GenerateSQL(deepJsonPath, "test_table", 0); // Set maxDepth to 0 for unlimited
-    Console.WriteLine("✓ Successfully generated SQL with unlimited depth");
-    Console.WriteLine($"Generated SQL:\n{sql}");
-}
-catch (NestedStructureLimitException ex)
-{
-    Console.WriteLine("✗ Failed: NestedStructureLimitException was thrown when it shouldn't have been");
-    Console.WriteLine($"Error Code: {ex.ErrorCode}");
-    Console.WriteLine($"Message: {ex.Message}");
-    Console.WriteLine("Metadata:");
-    foreach (var meta in ex.Metadata)
-    {
-        Console.WriteLine($"  {meta.Key}: {meta.Value}");
-    }
-}
+//    var sqlClient = new ClickHouseClient(sqlOptions);
+//    var deepJsonPath = Path.Combine(TEST_FOLDER, "deep.json");
+//    var sql = sqlClient.GenerateSQL(deepJsonPath, "test_table", 0); // Set maxDepth to 0 for unlimited
+//    Console.WriteLine("✓ Successfully generated SQL with unlimited depth");
+//    Console.WriteLine($"Generated SQL:\n{sql}");
+//}
+//catch (NestedStructureLimitException ex)
+//{
+//    Console.WriteLine("✗ Failed: NestedStructureLimitException was thrown when it shouldn't have been");
+//    Console.WriteLine($"Error Code: {ex.ErrorCode}");
+//    Console.WriteLine($"Message: {ex.Message}");
+//    Console.WriteLine("Metadata:");
+//    foreach (var meta in ex.Metadata)
+//    {
+//        Console.WriteLine($"  {meta.Key}: {meta.Value}");
+//    }
+//}
 
-// Cleanup
-var deepJsonPath1 = Path.Combine(TEST_FOLDER, "deep.json");
-var deepJsonPath2 = Path.Combine(TEST_FOLDER, "deep_json.json");
+//// Cleanup
+//var deepJsonPath1 = Path.Combine(TEST_FOLDER, "deep.json");
+//var deepJsonPath2 = Path.Combine(TEST_FOLDER, "deep_json.json");
 
-if (File.Exists(deepJsonPath1))
-{
-    File.Delete(deepJsonPath1);
-}
-if (File.Exists(deepJsonPath2))
-{
-    File.Delete(deepJsonPath2);
-} 
+//if (File.Exists(deepJsonPath1))
+//{
+//    File.Delete(deepJsonPath1);
+//}
+//if (File.Exists(deepJsonPath2))
+//{
+//    File.Delete(deepJsonPath2);
+//} 

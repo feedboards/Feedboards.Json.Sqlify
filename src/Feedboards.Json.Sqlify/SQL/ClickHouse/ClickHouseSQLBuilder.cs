@@ -8,9 +8,9 @@ internal class ClickHouseSQLBuilder
 	{
 		foreach (var kvp in structure)
 		{
-			if (kvp.Value.Contains("Nested("))
+			if (kvp.Value.Contains("Array(") || kvp.Value.Contains("Tuple("))
 			{
-				var nestedCount = kvp.Value.Split(new[] { "Nested(" }, StringSplitOptions.None).Length - 1;
+				var nestedCount = kvp.Value.Split(new[] { "Array(", "Tuple(" }, StringSplitOptions.None).Length - 1;
 
 				if (nestedCount > 1)
 				{
@@ -27,9 +27,9 @@ internal class ClickHouseSQLBuilder
 
 		foreach (var kvp in structure)
 		{
-			if (kvp.Value.StartsWith("Nested("))
+			if (kvp.Value.Contains("Array(") || kvp.Value.Contains("Tuple("))
 			{
-				var nestedCount = kvp.Value.Split(new[] { "Nested(" }, StringSplitOptions.None).Length - 1;
+				var nestedCount = kvp.Value.Split(new[] { "Array(", "Tuple(" }, StringSplitOptions.None).Length - 1;
 				if (nestedCount > maxDepth)
 				{
 					throw new NestedStructureLimitException(
@@ -59,6 +59,11 @@ internal class ClickHouseSQLBuilder
 			sqlBuilder.AppendLine();
 		}
 
+		// Format CREATE TABLE statement
+		sqlBuilder.AppendLine($"CREATE TABLE IF NOT EXISTS {tableName}");
+		sqlBuilder.AppendLine("(");
+
+		// Format fields with proper indentation
 		foreach (var kvp in structure.OrderBy(kvp => kvp.Key))
 		{
 			string fieldName = kvp.Key;
@@ -72,120 +77,74 @@ internal class ClickHouseSQLBuilder
 
 			if (!fieldName.Contains("."))
 			{
-				if (fieldType.StartsWith("Nested("))
-				{
-					string formattedType = FormatNestedStructure(fieldType);
-					schemaLines.Add($"    `{fieldName}` {formattedType}");
-					processedFields.Add(fieldName);
-				}
-				else
-				{
-					schemaLines.Add($"    `{fieldName}` {fieldType}");
-					processedFields.Add(fieldName);
-				}
+				// Format field type for better readability
+				var formattedType = FormatFieldType(fieldType);
+				schemaLines.Add($"    `{fieldName}` {formattedType}");
+				processedFields.Add(fieldName);
 			}
 		}
 
-		var schema = string.Join(",\n", schemaLines);
-
-		sqlBuilder.AppendLine($"CREATE TABLE IF NOT EXISTS {tableName} (");
-		sqlBuilder.AppendLine(schema);
-		sqlBuilder.AppendLine(") ENGINE = MergeTree()");
+		// Join fields with proper line breaks and indentation
+		sqlBuilder.AppendLine(string.Join(",\n", schemaLines));
+		sqlBuilder.AppendLine(")");
+		sqlBuilder.AppendLine("ENGINE = MergeTree()");
 		sqlBuilder.AppendLine("ORDER BY tuple();");
 
 		return sqlBuilder.ToString();
 	}
 
-	private string FormatNestedStructure(string fieldType, int indentLevel = 2)
+	private string FormatFieldType(string fieldType)
 	{
-		if (!fieldType.StartsWith("Nested("))
+		if (fieldType.StartsWith("Nested("))
 		{
-			return fieldType;
-		}
-
-		var context = fieldType.Substring(7, fieldType.Length - 8).Trim();
-		var fields = new List<string>();
-		var currentField = "";
-		var nestedLevel = 0;
-		var inQuotes = false;
-		var parenthesesStack = 0;
-
-		foreach (char c in context)
-		{
-			if (c == '`')
+			// Format Nested type
+			var innerContent = fieldType.Substring(7, fieldType.Length - 8); // Remove "Nested(" and ")"
+			var fields = innerContent.Split(',').Select(f => f.Trim());
+			var formattedFields = new List<string>();
+			foreach (var field in fields)
 			{
-				inQuotes = !inQuotes;
-				currentField += c;
-				continue;
-			}
-
-			if (!inQuotes)
-			{
-				if (c == '(')
+				if (field.StartsWith("Nested("))
 				{
-					if (currentField.TrimEnd().EndsWith("Nested"))
-					{
-						nestedLevel++;
-					}
-					parenthesesStack++;
-					currentField += c;
+					// Handle nested Nested types
+					var nestedContent = field.Substring(7, field.Length - 8);
+					var nestedFields = nestedContent.Split(',').Select(f => f.Trim());
+					formattedFields.Add($"Nested({string.Join(", ", nestedFields)})");
 				}
-				else if (c == ')')
+				else if (field.StartsWith("Array("))
 				{
-					parenthesesStack--;
-					if (nestedLevel > 0 && parenthesesStack == 0)
-					{
-						nestedLevel--;
-					}
-					currentField += c;
+					formattedFields.Add(field);
 				}
-				else if (c == ',' && nestedLevel == 0 && parenthesesStack == 0)
+				else if (field.StartsWith("Tuple("))
 				{
-					fields.Add(currentField.Trim());
-					currentField = "";
+					var tupleContent = field.Substring(6, field.Length - 7);
+					var tupleFields = tupleContent.Split(',').Select(f => f.Trim());
+					formattedFields.Add($"Tuple({string.Join(", ", tupleFields)})");
 				}
 				else
 				{
-					currentField += c;
+					formattedFields.Add(field);
 				}
 			}
-			else
-			{
-				currentField += c;
-			}
+			return $"Nested(\n        {string.Join(",\n        ", formattedFields)}\n    )";
 		}
-
-		if (!string.IsNullOrEmpty(currentField))
+		else if (fieldType.StartsWith("Tuple("))
 		{
-			fields.Add(currentField.Trim());
+			// Format Tuple type
+			var innerContent = fieldType.Substring(6, fieldType.Length - 7); // Remove "Tuple(" and ")"
+			var fields = innerContent.Split(',').Select(f => f.Trim());
+			return $"Tuple({string.Join(", ", fields)})";
 		}
-
-		var formattedFields = new List<string>();
-		var baseIndent = new string(' ', indentLevel * 4);
-
-		foreach (var field in fields)
+		else if (fieldType.StartsWith("Array("))
 		{
-			if (field.Contains("Nested("))
+			// Format Array type
+			var innerContent = fieldType.Substring(5, fieldType.Length - 6); // Remove "Array(" and ")"
+			if (innerContent.StartsWith("Tuple(") || innerContent.StartsWith("Nested("))
 			{
-				var parts = field.Split(new[] { "Nested(" }, 2, StringSplitOptions.None);
-				var fieldName = parts[0].Trim();
-				var nestedContent = "Nested(" + parts[1];
-				
-				// Add space between field name and Nested keyword if missing
-				if (!string.IsNullOrEmpty(fieldName) && !fieldName.EndsWith(" "))
-				{
-					fieldName += " ";
-				}
-				
-				var formattedNested = FormatNestedStructure(nestedContent, indentLevel + 1);
-				formattedFields.Add($"{fieldName}{formattedNested}");
+				// For nested types inside Array, format them recursively
+				return $"Array({FormatFieldType(innerContent)})";
 			}
-			else
-			{
-				formattedFields.Add(field.Trim());
-			}
+			return $"Array({innerContent})";
 		}
-
-		return $"Nested(\n{baseIndent}{string.Join($",\n{baseIndent}", formattedFields)}\n{new string(' ', (indentLevel - 1) * 4)})";
+		return fieldType;
 	}
 }

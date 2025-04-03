@@ -8,6 +8,7 @@
   </PropertyGroup>
 
   <ItemGroup>
+    <Folder Include="test\MRF\" />
     <Folder Include="test\SQL\" />
   </ItemGroup>
 
