@@ -1,5 +1,6 @@
 ﻿using System.Data;
 using System.Globalization;
+using System.Text;
 using System.Text.Json;
 using System.Text.Json.Serialization.Metadata;
 using Feedboards.Json.Sqlify.ErrorSystem.Exceptions;
@@ -12,7 +13,11 @@ internal class ClickHouseJsonAnalyzer
 	/// Recursively analyze the structure of a JSON object to determine field types.
 	/// Returns a dictionary mapping field paths to their ClickHouse data types.
 	/// </summary>
-	public Dictionary<string, string> AnalyzeJsonStructure(JsonElement jsonData, string prefix, int maxDepth, int currentDepth)
+	public Dictionary<string, string> AnalyzeJsonStructure(
+		JsonElement jsonData, 
+		string prefix, 
+		int maxDepth, 
+		int currentDepth)
 	{
 		var structure = new Dictionary<string, string>();
 
@@ -29,9 +34,17 @@ internal class ClickHouseJsonAnalyzer
 			var arr = jsonData.EnumerateArray().ToList();
 			if (arr.Count > 0)
 			{
-				//TODO Scan all items of array
-				// Take the first item as a sample for structure
-				return AnalyzeJsonStructure(arr[0], prefix, maxDepth, currentDepth);
+				var result = SumUpArrays(arr);
+
+				var stringBuilder = new StringBuilder();
+				foreach (var kvp in result)
+				{
+					stringBuilder.AppendLine($"   `{kvp.Key}` {kvp.Value},");
+				}
+
+
+				//TODD format
+				return result;
 			}
 			return structure;
 		}
@@ -55,55 +68,24 @@ internal class ClickHouseJsonAnalyzer
 				if (value.ValueKind == JsonValueKind.Array)
 				{
 					var arr = value.EnumerateArray().ToList();
-
-					//TODO Scan all items of array
 					if (arr.Count > 0)
 					{
-						// Check if array contains objects (tuple) or simple values
+						var result = SumUpArrays(arr);
 
-						if (arr[0].ValueKind == JsonValueKind.Object)
+						var stringBuilder = new StringBuilder();
+						stringBuilder.AppendLine("Nested(");
+						foreach (var kvp in result)
 						{
-							SumUpArray(arr);
-
-							// For arrays of objects, collect all possible fields from all objects
-							var allFields = new Dictionary<string, JsonElement>();
-							foreach (var obj in arr)
-							{
-								foreach (var property in obj.EnumerateObject())
-								{
-									if (!allFields.ContainsKey(property.Name))
-									{
-										allFields[property.Name] = property.Value;
-									}
-								}
-							}
-
-							// Create tuple fields with nullable types
-							var tupleFields = new List<string>();
-							foreach (var field in allFields)
-							{
-								var fieldType = GetClickHouseType(field.Value);
-								// Make field nullable if it doesn't appear in all objects
-								if (arr.Any(obj => !obj.EnumerateObject().Any(p => p.Name == field.Key)))
-								{
-									fieldType = $"Nullable({fieldType})";
-								}
-								tupleFields.Add($"`{field.Key}` {fieldType}");
-							}
-							structure[fieldPath] = $"Array(Tuple({string.Join(", ", tupleFields)}))";
+							stringBuilder.AppendLine($"   `{kvp.Key}` {kvp.Value},");
 						}
-						else
-						{
-							// For arrays of simple values
-							var elementType = GetClickHouseType(arr[0]);
-							elementType = MakeNullableIfNeeded(elementType, arr[0]);
-							structure[fieldPath] = $"Array({elementType})";
-						}
+						stringBuilder.AppendLine(")");
+
+						structure[fieldPath] = MakeNullableIfNeeded(
+							stringBuilder.ToString(), value);
 					}
 					else
 					{
-						// Empty array - default to Array(String)
-						structure[fieldPath] = "Array(String)"; //TODO
+						structure[fieldPath] = MakeNullableIfNeeded("Array(String)", value);
 					}
 					continue;
 				}
@@ -134,12 +116,14 @@ internal class ClickHouseJsonAnalyzer
 			var arr = jsonData.EnumerateArray().ToList();
 			if (arr.Count > 0)
 			{
-				var elementType = GetClickHouseType(arr[0]);
-				structure[prefix] = $"Array({elementType})";
+				//var elementType = GetClickHouseType(arr[0]);
+				//structure[prefix] = $"Array({elementType})";
+
+				var result = SumUpArrays(arr);
 			}
 			else
 			{
-				structure[prefix] = "Array(String)";
+				structure[prefix] = "Nullable(Array(String))"; //TODO
 			}
 		}
 		else
@@ -187,59 +171,8 @@ internal class ClickHouseJsonAnalyzer
 				// For null values, we'll use Nullable(String) as default
 				// The actual type will be determined by the context
 				return "Nullable(String)";
-			case JsonValueKind.Object:
-				var tupleFields = new List<string>();
-				foreach (var obj in value.EnumerateObject())
-				{
-					var fieldType = GetClickHouseType(obj.Value);
-					fieldType = MakeNullableIfNeeded(fieldType, obj.Value);
-					tupleFields.Add($"`{obj.Name}` {fieldType}");
-				}
-				return $"Tuple({string.Join(", ", tupleFields)})";
-			case JsonValueKind.Array:
-				var arr = value.EnumerateArray().ToList();
-				if (arr.Count > 0)
-				{
-					if (arr[0].ValueKind == JsonValueKind.Object)
-					{
-						// For arrays of objects, collect all possible fields from all objects
-						var allFields = new Dictionary<string, JsonElement>();
-						foreach (var obj in arr)
-						{
-							foreach (var prop in obj.EnumerateObject())
-							{
-								if (!allFields.ContainsKey(prop.Name))
-								{
-									allFields[prop.Name] = prop.Value;
-								}
-							}
-						}
-
-						// Create tuple fields with nullable types
-						var listOfTupleFields = new List<string>();
-						foreach (var field in allFields)
-						{
-							var fieldType = GetClickHouseType(field.Value);
-							// Make field nullable if it doesn't appear in all objects
-							if (arr.Any(obj => !obj.EnumerateObject().Any(p => p.Name == field.Key)))
-							{
-								fieldType = $"Nullable({fieldType})";
-							}
-							listOfTupleFields.Add($"`{field.Key}` {fieldType}");
-						}
-						return $"Array(Tuple({string.Join(", ", listOfTupleFields)}))";
-					}
-					else
-					{
-						// For arrays of simple values
-						var elementType = GetClickHouseType(arr[0]);
-						elementType = MakeNullableIfNeeded(elementType, arr[0]);
-						return $"Array({elementType})";
-					}
-				}
-				return "Array(String)";
 			default:
-				return "String";
+				return null;
 		}
 	}
 
@@ -250,15 +183,21 @@ internal class ClickHouseJsonAnalyzer
 	{
 		// Check if the value is null
 		if (value.ValueKind == JsonValueKind.Null)
+		{
 			return true;
+		}
 
 		// For numbers, check if it's zero (which might indicate null in some contexts)
 		if (value.ValueKind == JsonValueKind.Number)
 		{
 			if (value.TryGetInt64(out var int64) && int64 == 0)
+			{
 				return true;
+			}
 			if (value.TryGetDouble(out var doubleValue) && doubleValue == 0)
+			{
 				return true;
+			}
 		}
 
 		// For strings, check if it's empty or "null"
@@ -266,6 +205,12 @@ internal class ClickHouseJsonAnalyzer
 		{
 			var str = value.GetString();
 			return string.IsNullOrEmpty(str) || str.ToLower() == "null";
+		}
+
+		// For an empty array
+		if (value.ValueKind == JsonValueKind.Array)
+		{
+			return value.ToString() == "[]";
 		}
 
 		return false;
@@ -283,76 +228,163 @@ internal class ClickHouseJsonAnalyzer
 		return type;
 	}
 
-	private void SumUpArray(List<JsonElement> array)
+	private Dictionary<string, string> SumUpArrays(List<JsonElement> array)
 	{
+		var result = new Dictionary<string, string>();
+
 		for (int i = 0; i < array.Count - 1; i++)
 		{
-			var firstElement = array[i];
-			var secondElement = array[i + 1];
-			
-			var result = CompereTwoArrays(firstElement, secondElement);
+			if (i == 0)
+			{ 
+				result = CompereTwoArrays(
+					DetectTypeOfPropertyInArray(array[i]),
+					array[i + 1]);
+			}
+			else
+			{
+				result = CompereTwoArrays(result, array[i + 1]);
+			}
 		}
+
+		return result;
 	}
 
 	private Dictionary<string, string> CompereTwoArrays(
-		JsonElement firstElement, JsonElement secodElement)
+		Dictionary<string, string> firstElement, 
+		JsonElement secondElement)
 	{
-		var allFieldsOfFirstArray = new Dictionary<string, string>();
-		foreach (var property in firstElement.EnumerateObject())
-		{
-			if (property.Value.ValueKind == JsonValueKind.Array)
-			{
-				allFieldsOfFirstArray[property.Name] = "array";
-			}
-
-			if (property.Value.ValueKind == JsonValueKind.Object)
-			{
-				allFieldsOfFirstArray[property.Name] = "object";
-			}
-		}
-
-		var allFieldsOfSecondArray = new Dictionary<string, string>();
-		foreach (var property in secodElement.EnumerateObject())
-		{
-			if (property.Value.ValueKind == JsonValueKind.Array)
-			{
-				allFieldsOfSecondArray[property.Name] = "array";
-			}
-
-			if (property.Value.ValueKind == JsonValueKind.Object)
-			{
-				allFieldsOfSecondArray[property.Name] = "object";
-			}
-		}
+		var allFieldsOfSecondArray = DetectTypeOfPropertyInArray(secondElement);
 
 		//Check if any property is null
 		var result = new Dictionary<string, string>();
-		if (allFieldsOfFirstArray.Count > allFieldsOfSecondArray.Count)
+		if (firstElement.Count > allFieldsOfSecondArray.Count)
 		{
-			foreach (var property in allFieldsOfFirstArray)
-			{
-				if (!allFieldsOfSecondArray.ContainsKey(property.Key))
-				{
-					result.Add(property.Key, $"null {property.Value}");
-				}
-				else
-				{
-					result.Add(property.Key, property.Value);
-				}
-			}
+			result = SetNullable(firstElement, allFieldsOfSecondArray);
 		}
 		else
 		{
-			foreach (var property in allFieldsOfSecondArray)
+			result = SetNullable(allFieldsOfSecondArray, firstElement);
+		}
+
+		Dictionary<string, string> SetNullable(
+			Dictionary<string, string> firstElement,
+			Dictionary<string, string> secondElement)
+		{
+			var setNullResult = new Dictionary<string, string>();
+
+			foreach (var property in firstElement)
 			{
-				if (!allFieldsOfFirstArray.ContainsKey(property.Key))
+				if (!secondElement.ContainsKey(property.Key))
 				{
-					result.Add(property.Key, $"null {property.Value}");
+					setNullResult.Add(property.Key, $"Nullable({property.Value})");
 				}
 				else
 				{
-					result.Add(property.Key, property.Value);
+					setNullResult.Add(property.Key, property.Value);
 				}
+			}
+
+			return setNullResult;
+		}
+
+		return result;
+	}
+
+	private Dictionary<string, string> DetectTypeOfPropertyInArray(JsonElement element)
+	{
+		var result = new Dictionary<string, string>();
+
+		try
+		{
+			foreach (var property in element.EnumerateObject())
+			{
+				// Simple types
+				var type = GetClickHouseType(property.Value);
+				if (!string.IsNullOrEmpty(type))
+				{
+					result[property.Name] = MakeNullableIfNeeded(type, property.Value);
+				}
+
+				if (property.Value.ValueKind == JsonValueKind.Array)
+				{
+					var arrayType = DetectTypeOfPropertyInArray(property.Value);
+
+					if (arrayType.Count == 1)
+					{
+						result[property.Name] = MakeNullableIfNeeded(
+							arrayType.FirstOrDefault().Value, property.Value);
+					}
+					else
+					{
+						//TODO format properties
+						var stringBuilder = new StringBuilder();
+						stringBuilder.AppendLine("Nested(");
+						foreach (var kvp in arrayType)
+						{
+							stringBuilder.AppendLine($"   `{kvp.Key}` {kvp.Value},");
+						}
+						stringBuilder.Append(")");
+
+						result[property.Name] = MakeNullableIfNeeded(
+							stringBuilder.ToString(), property.Value);
+					}
+				}
+
+				if (property.Value.ValueKind == JsonValueKind.Object)
+				{
+					result[property.Name] = "Object";
+
+					//TODO Handle nested objects 
+				}
+			}
+		}
+		catch (InvalidOperationException exc)
+		{
+			//TODO review this part of code
+			var typesInArray = new Dictionary<string, string>();
+
+			var index = 0;
+			foreach (var property in element.EnumerateArray())
+			{
+				if (property.ValueKind == JsonValueKind.Object)
+				{
+					return DetectTypeOfPropertyInArray(property);
+				}
+				else
+				{
+					var type = GetClickHouseType(property);
+
+					typesInArray[index.ToString()] = type;
+					index++;
+				}
+			}
+
+			if (typesInArray.Values.Distinct().Count() == 1)
+			{
+				result["Array"] = $"Array({typesInArray.FirstOrDefault().Value})";
+			}
+			else if (typesInArray.Values.Distinct().Count() == 0)
+			{
+				result["Array"] = "Array(String)";
+			}
+			else
+			{
+				var allTypes = typesInArray.Values.Distinct();
+				var formattedTypes = string.Empty;
+
+				foreach (var type in allTypes)
+				{
+					if (string.IsNullOrEmpty(formattedTypes))
+					{
+						formattedTypes = type.ToString().Trim();
+					}
+					else
+					{
+						formattedTypes += $", {type.ToString().Trim()}";
+					}
+				}
+
+				result["Tuple"] = $"Tuple({formattedTypes})";
 			}
 		}
 

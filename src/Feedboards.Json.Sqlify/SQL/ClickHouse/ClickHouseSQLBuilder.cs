@@ -8,9 +8,12 @@ internal class ClickHouseSQLBuilder
 	{
 		foreach (var kvp in structure)
 		{
-			if (kvp.Value.Contains("Array(") || kvp.Value.Contains("Tuple("))
+			if (
+				kvp.Value.Contains("Array(") || 
+				kvp.Value.Contains("Tuple(") || 
+				kvp.Value.Contains("Nested("))
 			{
-				var nestedCount = kvp.Value.Split(new[] { "Array(", "Tuple(" }, StringSplitOptions.None).Length - 1;
+				var nestedCount = kvp.Value.Split(new[] { "Array(", "Tuple(", "Nested(" }, StringSplitOptions.None).Length - 1;
 
 				if (nestedCount > 1)
 				{
@@ -27,9 +30,12 @@ internal class ClickHouseSQLBuilder
 
 		foreach (var kvp in structure)
 		{
-			if (kvp.Value.Contains("Array(") || kvp.Value.Contains("Tuple("))
+			if (
+				kvp.Value.Contains("Array(") ||
+				kvp.Value.Contains("Tuple(") ||
+				kvp.Value.Contains("Nested("))
 			{
-				var nestedCount = kvp.Value.Split(new[] { "Array(", "Tuple(" }, StringSplitOptions.None).Length - 1;
+				var nestedCount = kvp.Value.Split(new[] { "Array(", "Tuple(", "Nested(" }, StringSplitOptions.None).Length - 1;
 				if (nestedCount > maxDepth)
 				{
 					throw new NestedStructureLimitException(
@@ -78,8 +84,8 @@ internal class ClickHouseSQLBuilder
 			if (!fieldName.Contains("."))
 			{
 				// Format field type for better readability
-				var formattedType = FormatFieldType(fieldType);
-				schemaLines.Add($"    `{fieldName}` {formattedType}");
+				//var formattedType = FormatFieldType(fieldType);
+				schemaLines.Add($"    `{fieldName}` {fieldType}");
 				processedFields.Add(fieldName);
 			}
 		}

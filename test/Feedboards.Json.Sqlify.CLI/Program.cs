@@ -7,13 +7,68 @@ using Feedboards.Json.Sqlify.JSON.ClickHouse;
 using CustomFileNotFoundException = Feedboards.Json.Sqlify.ErrorSystem.Exceptions.FileNotFoundException;
 using System.Text.Json;
 using Feedboards.Json.Sqlify.Clients.ClickHousel;
+using System.Text;
 
- var client = new ClickHouseClient();
+
+//var types = new Dictionary<string, string>();
+//types["name"] = "String";
+//types["tags"] = "String";
+//types["id"] = "Int";
+//types["update_at"] = "DateTime";
+
+//StringBuilder sb = new StringBuilder();
+//sb.AppendLine("{");
+
+//// Option 1: Leave the comma on each line
+//foreach (var kvp in types)
+//{
+//	sb.AppendLine($"   `{kvp.Key}` {kvp.Value},");
+//}
+
+//sb.AppendLine("}");
+//Console.WriteLine(sb.ToString());
+
+//List<string> allTypes = [
+//	"Int",
+//	"String",
+//	"DataTime"
+//];
+//var formattedTypes = string.Empty;
+//foreach (var type in allTypes)
+//{
+//	if (string.IsNullOrEmpty(formattedTypes))
+//	{
+//		formattedTypes = type.ToString().Trim();
+//	}
+//	else
+//	{
+//		formattedTypes += $", {type.ToString().Trim()}";
+//	}
+//}
+
+//Console.WriteLine($"Tuple({formattedTypes})");
+
+
+//var count = 10;
+//for (var i = 1; i <= count / 2; i++)
+//{
+//	if (i == 1)
+//	{
+//		Console.WriteLine($"The first array: {i}");
+//		Console.WriteLine($"The second array: {i + 1}");
+//	}
+//	else
+//	{
+//		Console.WriteLine($"The first array: {i + 1}");
+//	}
+//}
+
+var client = new ClickHouseClient();
 
 client.GenerateSQLAndWrite(
-	"F:\\Projects\\src\\RetailLink\\python\\data\\MRF_index\\2025-03-01_7-ELEVEN-INC_index.json",
+	"F:\\Projects\\src\\Feedboards.Json.Sqlify\\test\\Feedboards.Json.Sqlify.CLI\\test\\MRF\\2025-03-01_7-ELEVEN-INC_index.json",
 	"F:\\Projects\\src\\Feedboards.Json.Sqlify\\test\\Feedboards.Json.Sqlify.CLI\\test\\MRF\\2025-03-01_7-ELEVEN-INC_index.sql",
-    "eleven_inc_index");
+	"eleven_inc_index");
 
 //Console.WriteLine("Testing error handling in ClickHouseClient...\n");
 
