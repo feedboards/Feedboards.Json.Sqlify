@@ -8,7 +8,242 @@ using CustomFileNotFoundException = Feedboards.Json.Sqlify.ErrorSystem.Exception
 using System.Text.Json;
 using Feedboards.Json.Sqlify.Clients.ClickHousel;
 using System.Text;
+using System.Text.RegularExpressions;
 
+//var data = "Nested(`plan_name` String,`plan_id` String,`plan_id_type` String,`plan_market_type` String)";
+//var data = "Nested(`reporting_plan_id` Nullable(String),`reporting_plan_id_type` Nullable(String),`ids` Nullable(Array(Int8)),`reporting_plans` Nested(`plan_name` String,`plan_id` String,`plan_id_type` String,`plan_market_type` String),`in_network_files` Nullable(Array(String)),`allowed_amount_file` Nullable(Nested(`description` String,`location` String)))";
+//var t = data.Substring(7);
+//var input = t.Remove(t.Length - 1);
+
+//List<string> parts = SplitOnTopLevelCommas(input);
+
+//// Now, process each part into key and value.
+//Dictionary<string, string> dict = new Dictionary<string, string>();
+//string pattern = @"^\s*(`[^`]+`)\s+(.+?)\s*$"; // group1: key, group2: value
+
+//foreach (string part in parts)
+//{
+//	string trimmedPart = part.Trim();
+//	Match match = Regex.Match(trimmedPart, pattern);
+//	if (match.Success)
+//	{
+//		string key = match.Groups[1].Value;
+//		string value = match.Groups[2].Value;
+//		dict[key] = value;
+//	}
+//}
+
+//// Print the dictionary to the console.
+//foreach (var kv in dict)
+//{
+//	Console.WriteLine($"key - {kv.Key}");
+//	Console.WriteLine($"value - {kv.Value}");
+//	Console.WriteLine();
+//}
+
+//static List<string> SplitOnTopLevelCommas(string s)
+//{
+//	var result = new List<string>();
+//	StringBuilder sb = new StringBuilder();
+//	int parenCount = 0;
+
+//	foreach (char c in s)
+//	{
+//		if (c == ',' && parenCount == 0)
+//		{
+//			result.Add(sb.ToString());
+//			sb.Clear();
+//		}
+//		else
+//		{
+//			if (c == '(')
+//				parenCount++;
+//			else if (c == ')')
+//				parenCount--;
+
+//			sb.Append(c);
+//		}
+//	}
+
+//	if (sb.Length > 0)
+//		result.Add(sb.ToString());
+
+//	return result;
+//}
+
+//var firstElement = new Dictionary<string, string>
+//		{
+//			{ "`reporting_structure`", "Nested(`reporting_plan_id` Nullable(String),`reporting_plan_id_type` Nullable(String),`ids` Nullable(Array(Int8)),`reporting_plans` Nested(`plan_name` String,`plan_id` String,`plan_id_type` String,`plan_market_type` String),`in_network_files` Nullable(Array(String)),`allowed_amount_file` Nullable(Nested(`description` String,`location` String)))" }
+//		};
+
+//// Suppose the second element is missing some properties inside the nested object.
+//// For example, it might only have reporting_plan_id and reporting_plans.
+//var secondElement = new Dictionary<string, string>
+//		{
+//			{ "`reporting_structure`", "Nested(`reporting_plan_id` Nullable(String),`reporting_plans` Nested(`plan_name` String,`plan_id` String,`plan_id_type` String,`plan_market_type` String))" }
+//		};
+
+//var result = SetNullable(firstElement, secondElement);
+
+//foreach (var prop in result)
+//{
+//	Console.WriteLine($"{prop.Key} {prop.Value}");
+//}
+
+//static Dictionary<string, string> SetNullable(
+//		Dictionary<string, string> firstElement,
+//		Dictionary<string, string> secondElement)
+//{
+//	var setNullResult = new Dictionary<string, string>();
+
+//	foreach (var property in firstElement)
+//	{
+//		// Check if the type is a Nested type (or a Nullable(Nested(...)))
+//		if (property.Value.Contains("Nested("))
+//		{
+//			// Parse the nested definition from firstElement.
+//			var firstNested = ParseNestedProperties(property.Value);
+
+//			// Try to get the corresponding nested definition from secondElement.
+//			Dictionary<string, string> secondNested = new Dictionary<string, string>();
+//			if (secondElement.ContainsKey(property.Key) && secondElement[property.Key].Contains("Nested("))
+//			{
+//				secondNested = ParseNestedProperties(secondElement[property.Key]);
+//			}
+
+//			// Recursively set nullability on the nested level.
+//			var updatedNested = SetNullable(firstNested, secondNested);
+
+//			// Rebuild the Nested string.
+//			// Preserve the Nullable wrapper if the second element doesn't contain the property.
+//			string rebuilt = RebuildNestedString(updatedNested);
+//			if (!secondElement.ContainsKey(property.Key))
+//			{
+//				setNullResult.Add(property.Key, $"Nullable(Nested({rebuilt}))");
+//			}
+//			else
+//			{
+//				setNullResult.Add(property.Key, $"Nested({rebuilt})");
+//			}
+//		}
+//		else if (!secondElement.ContainsKey(property.Key))
+//		{
+//			// If the property is missing in secondElement, wrap it with Nullable(...).
+//			setNullResult.Add(property.Key, $"Nullable({property.Value})");
+//		}
+//		else
+//		{
+//			setNullResult.Add(property.Key, property.Value);
+//		}
+//	}
+
+//	return setNullResult;
+//}
+
+///// <summary>
+///// Extracts inner properties from a Nested (or Nullable(Nested(...))) type string.
+///// Returns a dictionary where the key is the property name (including its backticks)
+///// and the value is its type definition.
+///// </summary>
+//static Dictionary<string, string> ParseNestedProperties(string nested)
+//{
+//	// Remove the Nullable wrapper if present.
+//	if (nested.StartsWith("Nullable("))
+//	{
+//		// Assumes well-formed input.
+//		nested = nested.Substring("Nullable(".Length, nested.Length - "Nullable(".Length - 1);
+//	}
+//	// Now nested should start with "Nested("
+//	int start = nested.IndexOf("Nested(");
+//	if (start >= 0)
+//	{
+//		nested = nested.Substring(start + "Nested(".Length, nested.Length - start - "Nested(".Length - 1);
+//	}
+//	// Now, nested contains the inner content, e.g.:
+//	//   "`reporting_plan_id` Nullable(String),`reporting_plan_id_type` Nullable(String),..."
+//	var entries = SplitOnTopLevelCommas(nested);
+//	var dict = new Dictionary<string, string>();
+
+//	// Regex to capture property name (in backticks) and the rest as its type.
+//	string pattern = @"^\s*(`[^`]+`)\s+(.+?)\s*$";
+//	foreach (var entry in entries)
+//	{
+//		Match m = Regex.Match(entry, pattern);
+//		if (m.Success)
+//		{
+//			dict[m.Groups[1].Value] = m.Groups[2].Value;
+//		}
+//	}
+//	return dict;
+//}
+
+///// <summary>
+///// Rebuilds a Nested type string from a dictionary of property definitions.
+///// The result will be of the form: "`prop1` type1,`prop2` type2,..."
+///// </summary>
+//static string RebuildNestedString(Dictionary<string, string> nestedDict)
+//{
+//	var parts = new List<string>();
+//	foreach (var kvp in nestedDict)
+//	{
+//		parts.Add($"{kvp.Key} {kvp.Value}");
+//	}
+//	return string.Join(",", parts);
+//}
+
+///// <summary>
+///// Splits a string on commas that are at the top level (i.e. not nested inside any parentheses).
+///// </summary>
+//static List<string> SplitOnTopLevelCommas(string s)
+//{
+//	var result = new List<string>();
+//	StringBuilder sb = new StringBuilder();
+//	int parenCount = 0;
+//	foreach (char c in s)
+//	{
+//		if (c == ',' && parenCount == 0)
+//		{
+//			result.Add(sb.ToString());
+//			sb.Clear();
+//		}
+//		else
+//		{
+//			if (c == '(')
+//				parenCount++;
+//			else if (c == ')')
+//				parenCount--;
+//			sb.Append(c);
+//		}
+//	}
+//	if (sb.Length > 0)
+//		result.Add(sb.ToString());
+//	return result;
+//}
+
+//string input = "Nested(`plan_name` String,`plan_id` String,`plan_id_type` String,`plan_market_type` String)";
+
+//string input = "`reporting_structure` Nested(`reporting_plan_id` Nullable(String),`reporting_plan_id_type` Nullable(String),`ids` Nullable(Array(Int8)),`reporting_plans` Nested(`plan_name` String,`plan_id` String,`plan_id_type` String,`plan_market_type` String),`in_network_files` Nullable(Array(String)),`allowed_amount_file` Nullable(Nested(`description` String,`location` String)))";
+
+//// Pattern explanation:
+////   `([^`]+)` matches the property name (inside backticks)
+////   \s+ matches one or more whitespace characters
+////   ([A-Za-z0-9_]+) captures the type (e.g., String)
+//string pattern = @"`([^`]+)`\s+([A-Za-z0-9_]+)";
+
+//// Find all matches in the input string
+//MatchCollection matches = Regex.Matches(input, pattern);
+
+//var elements = new Dictionary<string, string>();
+
+//foreach (Match match in matches)
+//{
+//	elements[match.Groups[1].Value] = match.Groups[2].Value;
+//}
+
+//foreach (var prop in elements)
+//{
+//	Console.WriteLine($"{prop.Key} {prop.Value}");
+//}
 
 //var types = new Dictionary<string, string>();
 //types["name"] = "String";

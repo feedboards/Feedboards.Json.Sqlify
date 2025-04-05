@@ -1,10 +1,7 @@
-﻿using System.Data;
-using System.Globalization;
-using System.Net.WebSockets;
+﻿using Feedboards.Json.Sqlify.ErrorSystem.Exceptions;
 using System.Text;
 using System.Text.Json;
-using System.Text.Json.Serialization.Metadata;
-using Feedboards.Json.Sqlify.ErrorSystem.Exceptions;
+using System.Text.RegularExpressions;
 
 namespace Feedboards.Json.Sqlify.JSON.ClickHouse;
 
@@ -15,9 +12,9 @@ internal class ClickHouseJsonAnalyzer
 	/// Returns a dictionary mapping field paths to their ClickHouse data types.
 	/// </summary>
 	public Dictionary<string, string> AnalyzeJsonStructure(
-		JsonElement jsonData, 
-		string prefix, 
-		int maxDepth, 
+		JsonElement jsonData,
+		string prefix,
+		int maxDepth,
 		int currentDepth)
 	{
 		var structure = new Dictionary<string, string>();
@@ -38,7 +35,7 @@ internal class ClickHouseJsonAnalyzer
 				return SumUpArrays(arr);
 			}
 			return structure;
-		} 
+		}
 		else if (jsonData.ValueKind == JsonValueKind.Object)
 		{
 			foreach (var prop in jsonData.EnumerateObject())
@@ -61,23 +58,9 @@ internal class ClickHouseJsonAnalyzer
 					if (arr.Count > 0)
 					{
 						var result = SumUpArrays(arr);
+						var formattedString = FormatNestedStructure(result);
 
-						var formattedString = "Nested(";
-						foreach (var kvp in result)
-						{
-							if (formattedString == "Nested(")
-							{
-								formattedString += $"`{kvp.Key}` {kvp.Value}";
-							}
-							else
-							{
-								formattedString += $",`{kvp.Key}` {kvp.Value}";
-							}
-						}
-						formattedString += ")";
-
-						structure[fieldPath] = MakeNullableIfNeeded(
-							formattedString, value);
+						structure[fieldPath] = MakeNullableIfNeeded(formattedString, value);
 					}
 					else
 					{
@@ -116,27 +99,39 @@ internal class ClickHouseJsonAnalyzer
 		switch (value.ValueKind)
 		{
 			case JsonValueKind.String:
-				// Try to detect date/time types
 				if (DateTime.TryParse(value.GetString(), out _))
+				{
 					return "DateTime";
+				}
+
 				return "String";
 			case JsonValueKind.Number:
 				if (value.TryGetInt64(out var int64))
 				{
-					// Determine the most appropriate integer type
 					if (int64 >= -128 && int64 <= 127)
+					{
 						return "Int8";
+					}
+
 					if (int64 >= -32768 && int64 <= 32767)
+					{
 						return "Int16";
+					}
+
 					if (int64 >= -2147483648 && int64 <= 2147483647)
+					{
 						return "Int32";
+					}
+
 					return "Int64";
 				}
 				if (value.TryGetDouble(out var doubleValue))
 				{
-					// Determine the most appropriate float type
 					if (doubleValue >= float.MinValue && doubleValue <= float.MaxValue)
+					{
 						return "Float32";
+					}
+
 					return "Float64";
 				}
 				return "String";
@@ -208,6 +203,88 @@ internal class ClickHouseJsonAnalyzer
 		return type;
 	}
 
+	private Dictionary<string, string> TranslateStringObjectToDictionary(string stringObject)
+	{
+		var preparedObject = stringObject.Substring(7);
+		var input = preparedObject.Remove(preparedObject.Length - 1);
+
+		var parts = SplitOnTopLevelCommas(input);
+
+		var result = new Dictionary<string, string>();
+		var pattern = @"^\s*(`[^`]+`)\s+(.+?)\s*$";
+
+		foreach (string part in parts)
+		{
+			var trimmedPart = part.Trim();
+			var match = Regex.Match(trimmedPart, pattern);
+			if (match.Success)
+			{
+				var transfer = match.Groups[1].Value.Substring(1);
+				var key = transfer.Remove(transfer.Length - 1);
+				var value = match.Groups[2].Value;
+
+				result[key] = value;
+			}
+		}
+
+		static List<string> SplitOnTopLevelCommas(string s)
+		{
+			var resultList = new List<string>();
+			var sb = new StringBuilder();
+			var parenCount = 0;
+
+			foreach (char c in s)
+			{
+				if (c == ',' && parenCount == 0)
+				{
+					resultList.Add(sb.ToString());
+					sb.Clear();
+				}
+				else
+				{
+					if (c == '(')
+					{
+						parenCount++;
+					}
+					else if (c == ')')
+					{
+						parenCount--;
+					}
+
+					sb.Append(c);
+				}
+			}
+
+			if (sb.Length > 0)
+				resultList.Add(sb.ToString());
+
+			return resultList;
+		}
+
+		return result;
+	}
+
+	private Dictionary<string, string> CompereTwoNestedObjectsFromTheString(
+		string firstObject,
+		string secondObject)
+	{
+		var firstObjectInDict = TranslateStringObjectToDictionary(firstObject);
+		var secondObjectInDict = TranslateStringObjectToDictionary(secondObject);
+
+		var result = new Dictionary<string, string>();
+
+		if (firstObjectInDict.Count > secondObjectInDict.Count)
+		{
+			result = SetNullable(firstObjectInDict, secondObjectInDict);
+		}
+		else
+		{
+			result = SetNullable(secondObjectInDict, firstObjectInDict);
+		}
+
+		return result;
+	}
+
 	private Dictionary<string, string> SumUpArrays(List<JsonElement> array)
 	{
 		var result = new Dictionary<string, string>();
@@ -215,7 +292,7 @@ internal class ClickHouseJsonAnalyzer
 		for (int i = 0; i < array.Count - 1; i++)
 		{
 			if (i == 0)
-			{ 
+			{
 				result = CompereTwoArrays(
 					DetectTypeOfPropertyInArray(array[i]),
 					array[i + 1]);
@@ -230,7 +307,7 @@ internal class ClickHouseJsonAnalyzer
 	}
 
 	private Dictionary<string, string> CompereTwoArrays(
-		Dictionary<string, string> firstElement, 
+		Dictionary<string, string> firstElement,
 		JsonElement secondElement)
 	{
 		var allFieldsOfSecondArray = DetectTypeOfPropertyInArray(secondElement);
@@ -246,28 +323,38 @@ internal class ClickHouseJsonAnalyzer
 			result = SetNullable(allFieldsOfSecondArray, firstElement);
 		}
 
-		Dictionary<string, string> SetNullable(
-			Dictionary<string, string> firstElement,
-			Dictionary<string, string> secondElement)
+		return result;
+	}
+
+	private Dictionary<string, string> SetNullable(
+		Dictionary<string, string> firstElement,
+		Dictionary<string, string> secondElement)
+	{
+		var setNullResult = new Dictionary<string, string>();
+
+		foreach (var property in firstElement)
 		{
-			var setNullResult = new Dictionary<string, string>();
-
-			foreach (var property in firstElement)
+			if (
+				property.Value.StartsWith("Nested(") &&
+				secondElement.ContainsKey(property.Key))
 			{
-				if (!secondElement.ContainsKey(property.Key))
-				{
-					setNullResult.Add(property.Key, $"Nullable({property.Value})");
-				}
-				else
-				{
-					setNullResult.Add(property.Key, property.Value);
-				}
-			}
+				var res = CompereTwoNestedObjectsFromTheString(
+					property.Value,
+					secondElement[property.Key]);
 
-			return setNullResult;
+				setNullResult[property.Key] = FormatNestedStructure(res);
+			}
+			else if (!secondElement.ContainsKey(property.Key))
+			{
+				setNullResult.Add(property.Key, $"Nullable({property.Value})");
+			}
+			else
+			{
+				setNullResult.Add(property.Key, property.Value);
+			}
 		}
 
-		return result;
+		return setNullResult;
 	}
 
 	private Dictionary<string, string> DetectTypeOfPropertyInArray(JsonElement element)
@@ -295,19 +382,7 @@ internal class ClickHouseJsonAnalyzer
 					}
 					else
 					{
-						var formattedString = "Nested(";
-						foreach (var kvp in arrayType)
-						{
-							if (formattedString == "Nested(")
-							{
-								formattedString += $"`{kvp.Key}` {kvp.Value}";
-							}
-							else
-							{
-								formattedString += $",`{kvp.Key}` {kvp.Value}";
-							}
-						}
-						formattedString += ")";
+						var formattedString = FormatNestedStructure(arrayType);
 
 						result[property.Name] = MakeNullableIfNeeded(formattedString, property.Value);
 					}
@@ -315,21 +390,7 @@ internal class ClickHouseJsonAnalyzer
 				else if (property.Value.ValueKind == JsonValueKind.Object)
 				{
 					var propertiesOfObject = DetectTypeOfPropertyInArray(property.Value);
-
-
-					var formattedString = "Nested(";
-					foreach (var kvp in propertiesOfObject)
-					{
-						if (formattedString == "Nested(")
-						{
-							formattedString += $"`{kvp.Key}` {kvp.Value}";
-						}
-						else
-						{
-							formattedString += $",`{kvp.Key}` {kvp.Value}";
-						}
-					}
-					formattedString += ")";
+					var formattedString = FormatNestedStructure(propertiesOfObject);
 
 					result[property.Name] = MakeNullableIfNeeded(formattedString, property.Value);
 				}
@@ -337,7 +398,6 @@ internal class ClickHouseJsonAnalyzer
 		}
 		catch (InvalidOperationException exc)
 		{
-			//TODO review this part of code
 			var typesInArray = new Dictionary<string, string>();
 
 			var index = 0;
@@ -386,5 +446,24 @@ internal class ClickHouseJsonAnalyzer
 		}
 
 		return result;
+	}
+
+	private string FormatNestedStructure(Dictionary<string, string> structure)
+	{
+		var formattedString = "Nested(";
+		foreach (var kvp in structure)
+		{
+			if (formattedString == "Nested(")
+			{
+				formattedString += $"`{kvp.Key}` {kvp.Value}";
+			}
+			else
+			{
+				formattedString += $",`{kvp.Key}` {kvp.Value}";
+			}
+		}
+		formattedString += ")";
+
+		return formattedString;
 	}
 }
