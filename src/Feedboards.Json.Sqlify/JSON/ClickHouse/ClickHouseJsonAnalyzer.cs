@@ -1,5 +1,6 @@
 ﻿using System.Data;
 using System.Globalization;
+using System.Net.WebSockets;
 using System.Text;
 using System.Text.Json;
 using System.Text.Json.Serialization.Metadata;
@@ -34,20 +35,11 @@ internal class ClickHouseJsonAnalyzer
 			var arr = jsonData.EnumerateArray().ToList();
 			if (arr.Count > 0)
 			{
-				var result = SumUpArrays(arr);
-
-				var stringBuilder = new StringBuilder();
-				foreach (var kvp in result)
-				{
-					stringBuilder.AppendLine($"   `{kvp.Key}` {kvp.Value},");
-				}
-
-				return result;
+				return SumUpArrays(arr);
 			}
 			return structure;
-		}
-
-		if (jsonData.ValueKind == JsonValueKind.Object)
+		} 
+		else if (jsonData.ValueKind == JsonValueKind.Object)
 		{
 			foreach (var prop in jsonData.EnumerateObject())
 			{
@@ -70,16 +62,22 @@ internal class ClickHouseJsonAnalyzer
 					{
 						var result = SumUpArrays(arr);
 
-						var stringBuilder = new StringBuilder();
-						stringBuilder.AppendLine("Nested(");
+						var formattedString = "Nested(";
 						foreach (var kvp in result)
 						{
-							stringBuilder.AppendLine($"   `{kvp.Key}` {kvp.Value},");
+							if (formattedString == "Nested(")
+							{
+								formattedString += $"`{kvp.Key}` {kvp.Value}";
+							}
+							else
+							{
+								formattedString += $",`{kvp.Key}` {kvp.Value}";
+							}
 						}
-						stringBuilder.Append(")");
+						formattedString += ")";
 
 						structure[fieldPath] = MakeNullableIfNeeded(
-							stringBuilder.ToString(), value);
+							formattedString, value);
 					}
 					else
 					{
@@ -87,9 +85,7 @@ internal class ClickHouseJsonAnalyzer
 					}
 					continue;
 				}
-
-				// Handle objects
-				if (value.ValueKind == JsonValueKind.Object)
+				else if (value.ValueKind == JsonValueKind.Object)
 				{
 					var result = AnalyzeJsonStructure(value, prefix, maxDepth, currentDepth);
 
@@ -201,6 +197,10 @@ internal class ClickHouseJsonAnalyzer
 	/// </summary>
 	private string MakeNullableIfNeeded(string type, JsonElement value)
 	{
+		if (type.Contains("Nullable("))
+		{
+			return type;
+		}
 		if (ShouldBeNullable(value))
 		{
 			return $"Nullable({type})";
@@ -284,8 +284,7 @@ internal class ClickHouseJsonAnalyzer
 				{
 					result[property.Name] = MakeNullableIfNeeded(type, property.Value);
 				}
-
-				if (property.Value.ValueKind == JsonValueKind.Array)
+				else if (property.Value.ValueKind == JsonValueKind.Array)
 				{
 					var arrayType = DetectTypeOfPropertyInArray(property.Value);
 
@@ -296,25 +295,43 @@ internal class ClickHouseJsonAnalyzer
 					}
 					else
 					{
-						//TODO format properties
-						var stringBuilder = new StringBuilder();
-						stringBuilder.AppendLine("Nested(");
+						var formattedString = "Nested(";
 						foreach (var kvp in arrayType)
 						{
-							stringBuilder.AppendLine($"   `{kvp.Key}` {kvp.Value},");
+							if (formattedString == "Nested(")
+							{
+								formattedString += $"`{kvp.Key}` {kvp.Value}";
+							}
+							else
+							{
+								formattedString += $",`{kvp.Key}` {kvp.Value}";
+							}
 						}
-						stringBuilder.Append(")");
+						formattedString += ")";
 
-						result[property.Name] = MakeNullableIfNeeded(
-							stringBuilder.ToString(), property.Value);
+						result[property.Name] = MakeNullableIfNeeded(formattedString, property.Value);
 					}
 				}
-
-				if (property.Value.ValueKind == JsonValueKind.Object)
+				else if (property.Value.ValueKind == JsonValueKind.Object)
 				{
-					result[property.Name] = "Object";
+					var propertiesOfObject = DetectTypeOfPropertyInArray(property.Value);
 
-					//TODO Handle nested objects 
+
+					var formattedString = "Nested(";
+					foreach (var kvp in propertiesOfObject)
+					{
+						if (formattedString == "Nested(")
+						{
+							formattedString += $"`{kvp.Key}` {kvp.Value}";
+						}
+						else
+						{
+							formattedString += $",`{kvp.Key}` {kvp.Value}";
+						}
+					}
+					formattedString += ")";
+
+					result[property.Name] = MakeNullableIfNeeded(formattedString, property.Value);
 				}
 			}
 		}
@@ -345,7 +362,7 @@ internal class ClickHouseJsonAnalyzer
 			}
 			else if (typesInArray.Values.Distinct().Count() == 0)
 			{
-				result["Array"] = "Array(String)";
+				result["Array"] = MakeNullableIfNeeded("Array(String)", element);
 			}
 			else
 			{
