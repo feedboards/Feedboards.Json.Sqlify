@@ -42,8 +42,6 @@ internal class ClickHouseJsonAnalyzer
 					stringBuilder.AppendLine($"   `{kvp.Key}` {kvp.Value},");
 				}
 
-
-				//TODD format
 				return result;
 			}
 			return structure;
@@ -78,7 +76,7 @@ internal class ClickHouseJsonAnalyzer
 						{
 							stringBuilder.AppendLine($"   `{kvp.Key}` {kvp.Value},");
 						}
-						stringBuilder.AppendLine(")");
+						stringBuilder.Append(")");
 
 						structure[fieldPath] = MakeNullableIfNeeded(
 							stringBuilder.ToString(), value);
@@ -90,17 +88,15 @@ internal class ClickHouseJsonAnalyzer
 					continue;
 				}
 
-				// Handle objects (tuples)
+				// Handle objects
 				if (value.ValueKind == JsonValueKind.Object)
 				{
-					var tupleFields = new List<string>();
-					foreach (var obj in value.EnumerateObject())
+					var result = AnalyzeJsonStructure(value, prefix, maxDepth, currentDepth);
+
+					foreach (var kvp in result)
 					{
-						var fieldType = GetClickHouseType(obj.Value);
-						fieldType = MakeNullableIfNeeded(fieldType, obj.Value);
-						tupleFields.Add($"`{obj.Name}` {fieldType}");
+						structure[kvp.Key] = kvp.Value;
 					}
-					structure[fieldPath] = $"Tuple({string.Join(", ", tupleFields)})";
 					continue;
 				}
 
@@ -108,22 +104,6 @@ internal class ClickHouseJsonAnalyzer
 				var type = GetClickHouseType(value);
 				type = MakeNullableIfNeeded(type, value);
 				structure[fieldPath] = type;
-			}
-		}
-		else if (jsonData.ValueKind == JsonValueKind.Array)
-		{
-			// Handle nested arrays
-			var arr = jsonData.EnumerateArray().ToList();
-			if (arr.Count > 0)
-			{
-				//var elementType = GetClickHouseType(arr[0]);
-				//structure[prefix] = $"Array({elementType})";
-
-				var result = SumUpArrays(arr);
-			}
-			else
-			{
-				structure[prefix] = "Nullable(Array(String))"; //TODO
 			}
 		}
 		else

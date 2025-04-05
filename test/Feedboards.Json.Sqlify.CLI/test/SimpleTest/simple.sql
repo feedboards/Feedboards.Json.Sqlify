@@ -1,7 +1,9 @@
-CREATE TABLE IF NOT EXISTS simple (
+CREATE TABLE IF NOT EXISTS eleven_inc_index
+(
     `test` Nested(
-        `name` String,
-        `title` String
-    )
-) ENGINE = MergeTree()
+   `name` String,
+   `title` String,
+)
+)
+ENGINE = MergeTree()
 ORDER BY tuple();

@@ -1,7 +1,9 @@
-CREATE TABLE IF NOT EXISTS test (
+CREATE TABLE IF NOT EXISTS eleven_inc_index
+(
     `message` String,
-    `metric` Float64,
-    `timestamp` DateTime64(3),
-    `user_id` UInt64
-) ENGINE = MergeTree()
+    `metric` Float32,
+    `timestamp` DateTime,
+    `user_id` Int8
+)
+ENGINE = MergeTree()
 ORDER BY tuple();

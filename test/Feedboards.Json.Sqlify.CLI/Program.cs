@@ -65,9 +65,14 @@ using System.Text;
 
 var client = new ClickHouseClient();
 
+//client.GenerateSQLAndWrite(
+//	"F:\\Projects\\src\\Feedboards.Json.Sqlify\\test\\Feedboards.Json.Sqlify.CLI\\test\\MRF\\2025-03-01_7-ELEVEN-INC_index.json",
+//	"F:\\Projects\\src\\Feedboards.Json.Sqlify\\test\\Feedboards.Json.Sqlify.CLI\\test\\MRF\\2025-03-01_7-ELEVEN-INC_index.sql",
+//	"eleven_inc_index");
+
 client.GenerateSQLAndWrite(
-	"F:\\Projects\\src\\Feedboards.Json.Sqlify\\test\\Feedboards.Json.Sqlify.CLI\\test\\MRF\\2025-03-01_7-ELEVEN-INC_index.json",
-	"F:\\Projects\\src\\Feedboards.Json.Sqlify\\test\\Feedboards.Json.Sqlify.CLI\\test\\MRF\\2025-03-01_7-ELEVEN-INC_index.sql",
+	"F:\\Projects\\src\\Feedboards.Json.Sqlify\\test\\Feedboards.Json.Sqlify.CLI\\test\\SimpleTest\\simple.json",
+	"F:\\Projects\\src\\Feedboards.Json.Sqlify\\test\\Feedboards.Json.Sqlify.CLI\\test\\SimpleTest\\simple.sql",
 	"eleven_inc_index");
 
 //Console.WriteLine("Testing error handling in ClickHouseClient...\n");
