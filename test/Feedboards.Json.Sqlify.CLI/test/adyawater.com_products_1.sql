@@ -1,52 +1,54 @@
 SET flatten_nested=0;
 
-CREATE TABLE IF NOT EXISTS products (
+CREATE TABLE IF NOT EXISTS eleven_inc_index
+(
     `products` Nested(
-        `body_html` String, -------------------
-        `created_at` DateTime64(3), -----------------
-        `handle` String, ------------------
-        `id` UInt64, -------------------------
-        `images` Nested( ---------------
-            `created_at` DateTime64(3), -------------
-            `height` UInt64, ------------------
-            `id` UInt64, ----------
-            `position` UInt64, -------------------
-            `product_id` UInt64, --------------
-            `src` String, -------------
-            `updated_at` DateTime64(3), --------------
-            `variant_ids` Array(String), -----------
-            `width` UInt64 --------------
+        `id` Int32,
+        `title` String,
+        `handle` String,
+        `body_html` String,
+        `published_at` DateTime,
+        `created_at` DateTime,
+        `updated_at` DateTime,
+        `vendor` String,
+        `product_type` String,
+        `tags` Array(String),
+        `variants` Nested(
+            `id` Int64,
+            `title` String,
+            `option1` String,
+            `option2` Nullable(String),
+            `option3` Nullable(String),
+            `sku` Nullable(String),
+            `requires_shipping` UInt8,
+            `taxable` UInt8,
+            `featured_image` Nullable(String),
+            `available` UInt8,
+            `price` String,
+            `grams` Int16,
+            `compare_at_price` Nullable(String),
+            `position` Int8,
+            `product_id` Int64,
+            `created_at` DateTime,
+            `updated_at` DateTime
         ),
-        `options` Nested( -------------
-            `name` String, -----------------
-            `position` UInt64, ------------
-            `values` Array(String) ----------
+        `images` Nested(
+            `id` Int64,
+            `created_at` DateTime,
+            `position` Int8,
+            `updated_at` DateTime,
+            `product_id` Int64,
+            `variant_ids` Nullable(Array(String)),
+            `src` String,
+            `width` Int16,
+            `height` Int16
         ),
-        `product_type` String, ----------------------
-        `published_at` DateTime64(3), --------------------
-        `tags` Array(String), ------------------
-        `title` String, ----------------
-        `updated_at` DateTime64(3), ----------------
-        `variants` Nested( ----------------
-            `available` UInt8, ---------------
-            `compare_at_price` Nullable(String), -------------
-            `created_at` DateTime64(3), ---------------
-            `featured_image` Nullable(String), ---------
-            `grams` UInt64, ----------------
-            `id` UInt64, ---------------------
-            `option1` String, ---------------
-            `option2` Nullable(String), --------------
-            `option3` Nullable(String), ---------------
-            `position` UInt64, ----------------
-            `price` String, ----------------
-            `product_id` UInt64, --------------
-            `requires_shipping` UInt8, ---------------
-            `sku` Nullable(String), ---------------
-            `taxable` UInt8, ----------------
-            `title` String, ------------------
-            `updated_at` DateTime64(3) -----------
-        ),
-        `vendor` String ---------------------
+        `options` Nested(
+            `name` String,
+            `position` Int8,
+            `values` Array(String)
+        )
     )
-) ENGINE = MergeTree()
+)
+ENGINE = MergeTree()
 ORDER BY tuple();
