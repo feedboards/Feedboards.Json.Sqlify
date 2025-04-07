@@ -124,69 +124,6 @@ catch (InvalidJsonStructureException ex)
 }
 ```
 
-### NestedStructureLimitException
-
-Base exception for nesting depth validation. This exception has two distinct use cases with different error codes:
-
-1. **JSON Structure Validation (JSN_002)**
-
-   - Validates raw JSON structure depth
-   - Thrown during initial JSON parsing
-   - Focuses on data structure complexity
-
-2. **SQL Structure Validation (SQL_001)**
-   - Validates generated SQL nesting depth
-   - Thrown during SQL schema generation
-   - Focuses on database compatibility
-
-**Common Properties:**
-
-- `MaxAllowedDepth`: Maximum allowed nesting depth
-- `ActualDepth`: Actual depth encountered
-
-**Example - JSON Validation:**
-
-```csharp
-try
-{
-    client.GenerateSQL("deep.json", "table_name", maxDepth: 3);
-}
-catch (NestedStructureLimitException ex) when (ex.ErrorCode == "JSN_002")
-{
-    // Access error details
-    var maxDepth = ex.Metadata["MaxAllowedDepth"];
-    var actualDepth = ex.Metadata["ActualDepth"];
-    Console.WriteLine($"JSON structure too deep: {actualDepth} levels (max: {maxDepth})");
-}
-```
-
-**Example - SQL Validation:**
-
-```csharp
-try
-{
-    client.GenerateSQL("complex.json", "table_name", maxDepth: 2);
-}
-catch (NestedStructureLimitException ex) when (ex.ErrorCode == "SQL_001")
-{
-    // Access error details
-    var maxDepth = ex.Metadata["MaxAllowedDepth"];
-    var actualDepth = ex.Metadata["ActualDepth"];
-    var tableName = ex.Metadata["TableName"];
-    var nestedField = ex.Metadata["NestedField"];
-
-    Console.WriteLine($"SQL nesting too deep in table {tableName}");
-    Console.WriteLine($"Field {nestedField} has depth {actualDepth} (max: {maxDepth})");
-}
-```
-
-**Depth Configuration:**
-
-- Positive number (e.g., `maxDepth: 5`): Limits nesting to that depth
-- Zero (`maxDepth: 0`): Unlimited depth
-- Negative number (e.g., `maxDepth: -1`): Same as zero, unlimited depth
-- Default (not specified): Limits to 10 levels
-
 ### DatabaseConnectionFailedException
 
 Thrown when database connection fails.
@@ -229,9 +166,6 @@ FeedboardsJsonSqlifyException
 ├── InvalidConfigurationException
 ├── InvalidTableNameException
 ├── InvalidJsonStructureException
-├── NestedStructureLimitException
-│   ├── JSON Limit (JSN_002)
-│   └── SQL Limit (SQL_001)
 └── DatabaseConnectionFailedException
 ```
 
@@ -248,35 +182,24 @@ catch (InvalidTableNameException ex)
 {
     // Handle table name error
 }
-catch (NestedStructureLimitException ex) when (ex.ErrorCode == "SQL_001")
-{
-    // Handle SQL nesting limit
-}
-catch (NestedStructureLimitException ex) when (ex.ErrorCode == "JSN_002")
-{
-    // Handle JSON nesting limit
-}
-catch (InvalidJsonStructureException ex)
-{
-    // Handle JSON error
-}
 catch (FeedboardsJsonSqlifyException ex)
 {
-    // Handle any other custom exception
+    // Handle other custom exceptions
 }
 catch (Exception ex)
 {
-    // Handle unexpected errors
+    // Handle unexpected exceptions
 }
 ```
 
-2. **Use metadata for detailed error handling:**
+2. **Use the metadata to get detailed error information:**
 
 ```csharp
 catch (FeedboardsJsonSqlifyException ex)
 {
     Console.WriteLine($"Error Code: {ex.ErrorCode}");
     Console.WriteLine($"Message: {ex.Message}");
+
     foreach (var data in ex.Metadata)
     {
         Console.WriteLine($"{data.Key}: {data.Value}");
@@ -284,17 +207,33 @@ catch (FeedboardsJsonSqlifyException ex)
 }
 ```
 
-3. **Check inner exceptions for root cause:**
+3. **Check the inner exception for more details:**
+
+```csharp
+catch (InvalidJsonStructureException ex)
+{
+    Console.WriteLine($"JSON Error: {ex.Message}");
+    if (ex.InnerException != null)
+    {
+        Console.WriteLine($"Original Error: {ex.InnerException.Message}");
+    }
+}
+```
+
+4. **Use error codes for programmatic handling:**
 
 ```csharp
 catch (FeedboardsJsonSqlifyException ex)
 {
-    var rootCause = ex;
-    while (rootCause.InnerException != null)
+    switch (ex.ErrorCode)
     {
-        rootCause = rootCause.InnerException as FeedboardsJsonSqlifyException;
-        if (rootCause == null) break;
+        case "FILE_001":
+            // Handle file not found
+            break;
+        case "JSN_001":
+            // Handle JSON structure error
+            break;
+        // Handle other error codes
     }
-    // Handle root cause
 }
 ```

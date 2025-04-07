@@ -18,29 +18,24 @@ internal class ClickHouseJsonAnalyzer
 	/// Recursively analyze the structure of a JSON object to determine field types.
 	/// Returns a dictionary mapping field paths to their ClickHouse data types.
 	/// </summary>
-	public Dictionary<string, string> AnalyzeJsonStructure(
-		JsonElement jsonData,
-		string prefix,
-		int maxDepth,
-		int currentDepth)
+	public Dictionary<string, string> AnalyzeJsonStructure(JsonElement jsonData, string prefix)
 	{
 		var structure = new Dictionary<string, string>();
-
-		if (maxDepth > 0 && currentDepth >= maxDepth)
-		{
-			throw new NestedStructureLimitException(
-				actualDepth: currentDepth,
-				maxAllowedDepth: maxDepth);
-		}
 
 		// Handle root-level array
 		if (jsonData.ValueKind == JsonValueKind.Array && string.IsNullOrEmpty(prefix))
 		{
 			var arr = jsonData.EnumerateArray().ToList();
+
 			if (arr.Count > 0)
 			{
 				return clickHouseObjectComparer.SumUpArrays(arr);
 			}
+			else
+			{
+				structure[prefix] = "Nullable(Array(String))";
+			}
+
 			return structure;
 		}
 		else if (jsonData.ValueKind == JsonValueKind.Object)
@@ -50,13 +45,6 @@ internal class ClickHouseJsonAnalyzer
 				var safeKey = prop.Name.Replace(" ", "_");
 				var fieldPath = string.IsNullOrEmpty(prefix) ? safeKey : $"{prefix}.{safeKey}";
 				var value = prop.Value;
-
-				// Handle ID fields consistently
-				if (safeKey.EndsWith("_id") || safeKey == "id")
-				{
-					structure[fieldPath] = "UInt64";
-					continue;
-				}
 
 				// Handle arrays
 				if (value.ValueKind == JsonValueKind.Array)
@@ -77,7 +65,7 @@ internal class ClickHouseJsonAnalyzer
 				}
 				else if (value.ValueKind == JsonValueKind.Object)
 				{
-					var result = AnalyzeJsonStructure(value, prefix, maxDepth, currentDepth);
+					var result = AnalyzeJsonStructure(value, prefix);
 
 					foreach (var kvp in result)
 					{

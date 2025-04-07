@@ -35,12 +35,12 @@ public class ClickHouseClient : IClickHouseClient
 	/// <param name="maxDepth">Maximum depth for nested structures (default: 10, use 0 or negative for unlimited)</param>
 	/// <returns>Generated SQL schema as a string</returns>
 	/// <exception cref="InvalidConfigurationException">Thrown when PathToFolderWithJson is not provided in options</exception>
-	public string GenerateSQL(string tableName, int? maxDepth = 10)
+	public string GenerateSQL(string tableName)
 	{
 		var jsonFolder = option?.PathToFolderWithJson
 			?? throw new InvalidConfigurationException("PathToFolderWithJson", "Path to JSON folder is required");
 
-		return GenerateSQL(jsonFolder, tableName, maxDepth);
+		return GenerateSQL(jsonFolder, tableName);
 	}
 
 	/// <summary>
@@ -55,7 +55,7 @@ public class ClickHouseClient : IClickHouseClient
 	/// <exception cref="InvalidConfigurationException">Thrown when maxDepth is null</exception>
 	/// <exception cref="CustomFileNotFoundException">Thrown when the JSON file does not exist</exception>
 	/// <exception cref="InvalidJsonStructureException">Thrown when the JSON file contains invalid JSON</exception>
-	public string GenerateSQL(string jsonFolder, string? tableName = null, int? maxDepth = 10)
+	public string GenerateSQL(string jsonFolder, string? tableName = null)
 	{
 		if (string.IsNullOrEmpty(tableName))
 		{
@@ -78,10 +78,10 @@ public class ClickHouseClient : IClickHouseClient
 			var sqlBuilder = new ClickHouseSQLBuilder();
 
 			// First analyze the JSON structure without depth validation
-			var structure = jsonAnalyzer.AnalyzeJsonStructure(jsonData, "", 0, 0); // Use 0 to skip JSON depth validation
+			var structure = jsonAnalyzer.AnalyzeJsonStructure(jsonData, ""); // Use 0 to skip JSON depth validation
 
 			// Then validate SQL nesting depth
-			return sqlBuilder.GenerateClickHouseSchema(structure, tableName, maxDepth ?? 10);
+			return sqlBuilder.GenerateClickHouseSchema(structure, tableName);
 		}
 		catch (System.IO.FileNotFoundException ex)
 		{
@@ -105,14 +105,14 @@ public class ClickHouseClient : IClickHouseClient
 	/// <param name="maxDepth">Maximum depth for nested structures (default: 10)</param>
 	/// <returns>True if the operation was successful</returns>
 	/// <exception cref="InvalidConfigurationException">Thrown when PathToFolderWithJson or PathToOutputFolder is not provided in options</exception>
-	public bool GenerateSQLAndWrite(string tableName, int? maxDepth = 10)
+	public bool GenerateSQLAndWrite(string tableName)
 	{
 		var jsonFolder = option?.PathToFolderWithJson
 			?? throw new InvalidConfigurationException("PathToFolderWithJson");
 		var outputFolder = option?.PathToOutputFolder
 			?? throw new InvalidConfigurationException("PathToOutputFolder");
 
-		return GenerateSQLAndWrite(jsonFolder, outputFolder, tableName, maxDepth);
+		return GenerateSQLAndWrite(jsonFolder, outputFolder, tableName);
 	}
 
 	/// <summary>
@@ -125,21 +125,21 @@ public class ClickHouseClient : IClickHouseClient
 	/// <param name="maxDepth">Maximum depth for nested structures (default: 10)</param>
 	/// <returns>True if the operation was successful</returns>
 	/// <exception cref="InvalidConfigurationException">Thrown when the required configuration option is not provided</exception>
-	public bool GenerateSQLAndWrite(string folderPath, FolderType folderType, string? tableName = null, int? maxDepth = 10)
+	public bool GenerateSQLAndWrite(string folderPath, FolderType folderType, string? tableName = null)
 	{
 		if (folderType == FolderType.JsonFolder)
 		{
 			var outputFolder = option?.PathToOutputFolder
 				?? throw new InvalidConfigurationException("PathToOutputFolder");
 
-			return GenerateSQLAndWrite(folderPath, outputFolder, maxDepth: maxDepth);
+			return GenerateSQLAndWrite(folderPath, outputFolder);
 		}
 		else // FolderType.OutputFolder
 		{
 			var jsonFolder = option?.PathToFolderWithJson
 				?? throw new InvalidConfigurationException("PathToFolderWithJson");
 
-			return GenerateSQLAndWrite(jsonFolder, folderPath, tableName, maxDepth);
+			return GenerateSQLAndWrite(jsonFolder, folderPath, tableName);
 		}
 	}
 
@@ -160,7 +160,7 @@ public class ClickHouseClient : IClickHouseClient
 	/// <exception cref="FileNotFoundException">Thrown when the JSON file does not exist</exception>
 	/// <exception cref="InvalidJsonStructureException">Thrown when the JSON file contains invalid JSON</exception>
 	/// <exception cref="FeedboardsJsonSqlifyException">Thrown when an unexpected error occurs</exception>
-	public bool GenerateSQLAndWrite(string jsonFolder, string outputFolder, string? tableName = null, int? maxDepth = 10)
+	public bool GenerateSQLAndWrite(string jsonFolder, string outputFolder, string? tableName = null)
 	{
 		var jsonFolderType = Utils.CheckPath(jsonFolder);
 		var outputFolderType = Utils.CheckPath(outputFolder);
@@ -205,18 +205,12 @@ public class ClickHouseClient : IClickHouseClient
 					throw new InvalidTableNameException(tableName ?? "null");
 				}
 
-				if (maxDepth == null)
-				{
-					throw new InvalidConfigurationException("maxDepth");
-				}
-
 				var outputPath = Path.GetFullPath(outputFolder);
 				File.WriteAllText(
 					outputPath,
 					GenerateSQL(
 						jsonFolder,
-						tableName,
-						maxDepth));
+						tableName));
 			}
 
 			return true;
@@ -232,7 +226,6 @@ public class ClickHouseClient : IClickHouseClient
 					["JsonFolder"] = jsonFolder,
 					["OutputFolder"] = outputFolder,
 					["TableName"] = tableName ?? "null",
-					["MaxDepth"] = maxDepth?.ToString() ?? "null"
 				});
 		}
 	}
