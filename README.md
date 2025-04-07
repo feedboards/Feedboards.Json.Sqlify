@@ -250,21 +250,6 @@ try
         outputFolder: "path/to/sql/folder"
     );
 }
-catch (NestedStructureLimitException ex) when (ex.ErrorCode == "SQL_001")
-{
-    // Handle SQL nesting limit exceeded
-    Console.WriteLine($"SQL nesting limit exceeded in table {ex.Metadata["TableName"]}");
-    Console.WriteLine($"Field: {ex.Metadata["NestedField"]}");
-    Console.WriteLine($"Actual depth: {ex.Metadata["ActualDepth"]}");
-    Console.WriteLine($"Maximum allowed: {ex.Metadata["MaxAllowedDepth"]}");
-}
-catch (NestedStructureLimitException ex) when (ex.ErrorCode == "JSN_002")
-{
-    // Handle JSON nesting limit exceeded
-    Console.WriteLine($"JSON nesting limit exceeded");
-    Console.WriteLine($"Actual depth: {ex.Metadata["ActualDepth"]}");
-    Console.WriteLine($"Maximum allowed: {ex.Metadata["MaxAllowedDepth"]}");
-}
 catch (FeedboardsJsonSqlifyException ex)
 {
     Console.WriteLine($"Error {ex.ErrorCode}: {ex.Message}");
@@ -293,40 +278,20 @@ Input JSON:
 Generated SQL:
 
 ```sql
-CREATE TABLE IF NOT EXISTS test_table (
+CREATE TABLE IF NOT EXISTS test_table
+(
     `test` Nested(
         `name` String,
         `title` String
     )
-) ENGINE = MergeTree()
+)
+ENGINE = MergeTree()
 ORDER BY tuple();
 ```
 
 ### Nested Structures and flatten_nested Setting
 
 When dealing with nested structures inside other nested structures, the library automatically adds the `flatten_nested=0` setting to ensure proper handling of complex nested data.
-
-### Depth Limit Configuration
-
-The `maxDepth` parameter in `GenerateSQL` methods controls how deep the nested structures can go:
-
-- Positive number (e.g., `maxDepth: 5`): Limits nesting to that specific depth
-- Zero (`maxDepth: 0`): Unlimited depth
-- Negative number (e.g., `maxDepth: -1`): Unlimited depth
-- Default (no maxDepth specified): Limits to 10 levels
-
-Example:
-
-```csharp
-// Limit to 5 levels
-client.GenerateSQL("path/to/json", "table_name", maxDepth: 5);
-
-// Unlimited nesting
-client.GenerateSQL("path/to/json", "table_name", maxDepth: 0);
-
-// Default (10 levels)
-client.GenerateSQL("path/to/json", "table_name");
-```
 
 ## Error Handling
 
