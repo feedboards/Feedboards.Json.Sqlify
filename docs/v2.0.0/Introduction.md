@@ -4,8 +4,8 @@ A .NET library for converting JSON data structures into SQL schemas and tables. 
 
 ## Documentation
 
-- [Error Codes](docs/clickhouse/errors_code.md) - Detailed list of error codes and their meanings
-- [Exception Types](docs/error_types.md) - Exception types, usage, and best practices for error handling
+- [Error Codes](https://github.com/feedboards/Feedboards.Json.Sqlify/tree/dev/docs/v2.0.0/clickhouse/errors_code.md) - Detailed list of error codes and their meanings
+- [Exception Types](https://github.com/feedboards/Feedboards.Json.Sqlify/tree/dev/docs/v2.0.0/error_types.md) - Exception types, usage, and best practices for error handling
 
 ## Features
 
