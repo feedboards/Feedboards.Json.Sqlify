@@ -4,8 +4,8 @@ A .NET library for converting JSON data structures into SQL schemas and tables. 
 
 ## Documentation
 
-- [Error Codes](docs/clickhouse/errors_code.md) - Detailed list of error codes and their meanings
-- [Exception Types](docs/error_types.md) - Exception types, usage, and best practices for error handling
+- [Error Codes](https://github.com/feedboards/Feedboards.Json.Sqlify/tree/dev/docs/v2.0.0/clickhouse/error_codes.md) - Detailed list of error codes and their meanings
+- [Exception Types](https://github.com/feedboards/Feedboards.Json.Sqlify/tree/dev/docs/v2.0.0/error_types.md) - Exception types, usage, and best practices for error handling
 
 ## Features
 
@@ -297,8 +297,8 @@ When dealing with nested structures inside other nested structures, the library 
 
 The library provides a comprehensive error handling system with detailed error codes and metadata. For detailed information about error handling, see:
 
-- [Error Codes Documentation](docs/clickhouse/errors_code.md)
-- [Exception Types Documentation](docs/error_types.md)
+- [Error Codes Documentation](https://github.com/feedboards/Feedboards.Json.Sqlify/tree/dev/docs/v2.0.0/clickhouse/error_codes.md)
+- [Exception Types Documentation](https://github.com/feedboards/Feedboards.Json.Sqlify/tree/dev/docs/v2.0.0/error_types.md)
 
 Example of error handling:
 
@@ -334,13 +334,13 @@ Contributions are welcome! Please feel free to submit a Pull Request. For major 
 
 ## License
 
-This project is licensed under the MIT License - see the LICENSE file for details.
+This project is licensed under the MIT License - see the [LICENSE](https://github.com/feedboards/Feedboards.Json.Sqlify/blob/dev/LICENSE) file for details.
 
 ## Support
 
 For support, please:
 
-1. Check the [documentation](docs/)
+1. Check the [documentation](https://github.com/feedboards/Feedboards.Json.Sqlify/tree/dev/docs/v2.0.0)
 2. Open an issue in the GitHub repository
 3. Contact the maintainers
 
