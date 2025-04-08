@@ -37,10 +37,10 @@ cd Feedboards.Json.Sqlify
 dotnet build
 ```
 
-### NuGet Package (Coming Soon)
+### NuGet Package
 
 ```bash
-dotnet add package Feedboards.Json.Sqlify
+NuGet\Install-Package Feedboards.Json.Sqlify -Version 2.0.0
 ```
 
 ### Dependency Injection Setup
