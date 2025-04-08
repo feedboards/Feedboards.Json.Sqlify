@@ -446,7 +446,7 @@ SELECT
 FROM table_2
 ARRAY JOIN products.options;
 
-INSERT INTO test
+INSERT INTO eleven_inc_index_test
 SELECT *
 FROM file(
     '/var/lib/clickhouse/user_files/*.json',
@@ -613,7 +613,7 @@ CREATE TABLE IF NOT EXISTS eleven_inc_index (
 ORDER BY tuple();
 
 
-INSERT INTO eleven_inc_index
+INSERT INTO eleven_inc_index_test
 SELECT *
 FROM file(
     '/var/lib/clickhouse/user_files/2025-03-01_7-ELEVEN-INC_index.json',
@@ -697,19 +697,26 @@ CREATE TABLE IF NOT EXISTS eleven_inc_index
 ENGINE = MergeTree()
 ORDER BY tuple();
 
+INSERT INTO eleven_inc_index_3
+SELECT *
+FROM file(
+    '/var/lib/clickhouse/user_files/*.json',
+    'JSONEachRow'
+);
+
 
 SET flatten_nested=0;
 
-CREATE TABLE IF NOT EXISTS eleven_inc_index_test_2
+CREATE TABLE IF NOT EXISTS eleven_inc_index_3
 (
     `products` Nested(
         `id` Int32,
         `title` String,
         `handle` String,
         `body_html` String,
-        `published_at` DateTime,
-        `created_at` DateTime,
-        `updated_at` DateTime,
+        `published_at` String,
+        `created_at` String,
+        `updated_at` String,
         `vendor` String,
         `product_type` String,
         `tags` Array(String),
@@ -729,16 +736,16 @@ CREATE TABLE IF NOT EXISTS eleven_inc_index_test_2
             `compare_at_price` Nullable(String),
             `position` Int8,
             `product_id` Int64,
-            `created_at` DateTime,
-            `updated_at` DateTime
+            `created_at` String,
+            `updated_at` String
         ),
         `images` Nested(
             `id` Int64,
-            `created_at` DateTime,
+            `created_at` String,
             `position` Int8,
-            `updated_at` DateTime,
+            `updated_at` String,
             `product_id` Int64,
-            `variant_ids` Tuple(String),
+            `variant_ids` Array(String),
             `src` String,
             `width` Int16,
             `height` Int16
@@ -752,3 +759,5 @@ CREATE TABLE IF NOT EXISTS eleven_inc_index_test_2
 )
 ENGINE = MergeTree()
 ORDER BY tuple();
+
+

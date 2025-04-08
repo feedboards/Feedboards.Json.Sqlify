@@ -11,7 +11,7 @@ internal class ClickHouseTypeDetector
 			case JsonValueKind.String:
 				if (DateTime.TryParse(value.GetString(), out _))
 				{
-					return "DateTime";
+					return "String";
 				}
 
 				return "String";
