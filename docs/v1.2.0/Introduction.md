@@ -4,8 +4,8 @@ A .NET library for converting JSON data structures into SQL schemas and tables. 
 
 ## Documentation
 
-- [Error Codes](docs/clickhouse/errors_code.md) - Detailed list of error codes and their meanings
-- [Exception Types](docs/error_types.md) - Exception types, usage, and best practices for error handling
+- [Error Codes](https://github.com/feedboards/Feedboards.Json.Sqlify/tree/dev/docs/v1.2.0/clickhouse/errors_code.md) - Detailed list of error codes and their meanings
+- [Exception Types](https://github.com/feedboards/Feedboards.Json.Sqlify/tree/dev/docs/v1.2.0/error_types.md) - Exception types, usage, and best practices for error handling
 
 ## Features
 
@@ -332,8 +332,8 @@ client.GenerateSQL("path/to/json", "table_name");
 
 The library provides a comprehensive error handling system with detailed error codes and metadata. For detailed information about error handling, see:
 
-- [Error Codes Documentation](docs/clickhouse/errors_code.md)
-- [Exception Types Documentation](docs/error_types.md)
+- [Error Codes Documentation](https://github.com/feedboards/Feedboards.Json.Sqlify/tree/dev/docs/v1.2.0/clickhouse/errors_code.md)
+- [Exception Types Documentation](https://github.com/feedboards/Feedboards.Json.Sqlify/tree/dev/docs/v1.2.0/error_types.md)
 
 Example of error handling:
 
