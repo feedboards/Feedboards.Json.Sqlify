@@ -1,11 +1,10 @@
-﻿using Feedboards.Json.Sqlify.ErrorSystem.Exceptions;
-using System.Text.Json;
+﻿using System.Text.Json;
 
 namespace Feedboards.Json.Sqlify.JSON.ClickHouse;
 
 internal class ClickHouseJsonAnalyzer
 {
-	private readonly ClickHouseObjectComparer clickHouseObjectComparer; 
+	private readonly ClickHouseObjectComparer clickHouseObjectComparer;
 	private readonly ClickHouseTypeDetector clickHouseTypeDetector;
 
 	public ClickHouseJsonAnalyzer()
@@ -50,6 +49,7 @@ internal class ClickHouseJsonAnalyzer
 				if (value.ValueKind == JsonValueKind.Array)
 				{
 					var arr = value.EnumerateArray().ToList();
+
 					if (arr.Count > 0)
 					{
 						var result = clickHouseObjectComparer.SumUpArrays(arr);
@@ -61,6 +61,7 @@ internal class ClickHouseJsonAnalyzer
 					{
 						structure[fieldPath] = clickHouseTypeDetector.MakeNullableIfNeeded("Array(String)", value);
 					}
+
 					continue;
 				}
 				else if (value.ValueKind == JsonValueKind.Object)
@@ -71,12 +72,14 @@ internal class ClickHouseJsonAnalyzer
 					{
 						structure[kvp.Key] = kvp.Value;
 					}
+
 					continue;
 				}
 
 				// Handle simple values
 				var type = clickHouseTypeDetector.GetClickHouseType(value);
 				type = clickHouseTypeDetector.MakeNullableIfNeeded(type, value);
+
 				structure[fieldPath] = type;
 			}
 		}

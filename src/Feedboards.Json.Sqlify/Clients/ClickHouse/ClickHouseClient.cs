@@ -1,15 +1,14 @@
 ﻿using Feedboards.Json.Sqlify.Clients.ClickHouse;
 using Feedboards.Json.Sqlify.Clients.ClickHouse.Interfaces;
 using Feedboards.Json.Sqlify.DTOs.ClickHouse;
+using Feedboards.Json.Sqlify.ErrorSystem;
+using Feedboards.Json.Sqlify.ErrorSystem.Exceptions;
 using Feedboards.Json.Sqlify.JSON.ClickHouse;
 using Feedboards.Json.Sqlify.SQL.ClickHouse;
 using System.Text;
 using System.Text.Json;
-using Feedboards.Json.Sqlify.ErrorSystem.Exceptions;
-using Feedboards.Json.Sqlify.ErrorSystem;
-using CustomFileNotFoundException = Feedboards.Json.Sqlify.ErrorSystem.Exceptions.FileNotFoundException;
-using System.IO;
 using System.Text.RegularExpressions;
+using CustomFileNotFoundException = Feedboards.Json.Sqlify.ErrorSystem.Exceptions.FileNotFoundException;
 
 namespace Feedboards.Json.Sqlify.Clients.ClickHousel;
 
@@ -32,7 +31,6 @@ public class ClickHouseClient : IClickHouseClient
 	/// Uses configuration options for input path.
 	/// </summary>
 	/// <param name="tableName">Name of the table to generate</param>
-	/// <param name="maxDepth">Maximum depth for nested structures (default: 10, use 0 or negative for unlimited)</param>
 	/// <returns>Generated SQL schema as a string</returns>
 	/// <exception cref="InvalidConfigurationException">Thrown when PathToFolderWithJson is not provided in options</exception>
 	public string GenerateSQL(string tableName)
@@ -49,7 +47,6 @@ public class ClickHouseClient : IClickHouseClient
 	/// </summary>
 	/// <param name="jsonFolder">Path to the JSON file</param>
 	/// <param name="tableName">Name of the table to generate</param>
-	/// <param name="maxDepth">Maximum depth for nested structures (default: 10, use 0 or negative for unlimited)</param>
 	/// <returns>Generated SQL schema as a string</returns>
 	/// <exception cref="InvalidTableNameException">Thrown when tableName is null or empty</exception>
 	/// <exception cref="InvalidConfigurationException">Thrown when maxDepth is null</exception>
@@ -77,10 +74,8 @@ public class ClickHouseClient : IClickHouseClient
 			var jsonAnalyzer = new ClickHouseJsonAnalyzer();
 			var sqlBuilder = new ClickHouseSQLBuilder();
 
-			// First analyze the JSON structure without depth validation
-			var structure = jsonAnalyzer.AnalyzeJsonStructure(jsonData, ""); // Use 0 to skip JSON depth validation
+			var structure = jsonAnalyzer.AnalyzeJsonStructure(jsonData, "");
 
-			// Then validate SQL nesting depth
 			return sqlBuilder.GenerateClickHouseSchema(structure, tableName);
 		}
 		catch (System.IO.FileNotFoundException ex)
@@ -122,7 +117,6 @@ public class ClickHouseClient : IClickHouseClient
 	/// <param name="folderPath">Path to the folder containing JSON files or output folder</param>
 	/// <param name="folderType">Type of the provided folder (JsonFolder or OutputFolder)</param>
 	/// <param name="tableName">Name of the table to generate</param>
-	/// <param name="maxDepth">Maximum depth for nested structures (default: 10)</param>
 	/// <returns>True if the operation was successful</returns>
 	/// <exception cref="InvalidConfigurationException">Thrown when the required configuration option is not provided</exception>
 	public bool GenerateSQLAndWrite(string folderPath, FolderType folderType, string? tableName = null)
@@ -150,14 +144,11 @@ public class ClickHouseClient : IClickHouseClient
 	/// <param name="jsonFolder">Path to the JSON file or folder</param>
 	/// <param name="outputFolder">Path to the output SQL file or folder</param>
 	/// <param name="tableName">Name of the table to generate</param>
-	/// <param name="maxDepth">Maximum depth for nested structures (default: 10)</param>
 	/// <returns>True if the operation was successful</returns>
 	/// <exception cref="InvalidConfigurationException">Thrown when paths are invalid or when tableName is null</exception>
 	/// <exception cref="InvalidTableNameException">Thrown when tableName is null or empty</exception>
 	/// <exception cref="InvalidConfigurationException">Thrown when maxDepth is null</exception>
-	/// <exception cref="NestedStructureLimitException">Thrown when maxDepth exceeds the allowed limit</exception>
 	/// <exception cref="CustomFileNotFoundException">Thrown when the JSON file does not exist</exception>
-	/// <exception cref="FileNotFoundException">Thrown when the JSON file does not exist</exception>
 	/// <exception cref="InvalidJsonStructureException">Thrown when the JSON file contains invalid JSON</exception>
 	/// <exception cref="FeedboardsJsonSqlifyException">Thrown when an unexpected error occurs</exception>
 	public bool GenerateSQLAndWrite(string jsonFolder, string outputFolder, string? tableName = null)
@@ -248,7 +239,10 @@ public class ClickHouseClient : IClickHouseClient
 	/// <param name="PathToOutputFolder">Path to the output SQL file or folder</param>
 	/// <param name="databaseDetails">Connection details for the ClickHouse database</param>
 	/// <exception cref="NotImplementedException">This method is not yet implemented</exception>
-	public void GenerateSQLAndCreateTable(string? pathToFolderWithJson = null, string? PathToOutputFolder = null, ClickHouseDatabaseDetails? databaseDetails = null)
+	public void GenerateSQLAndCreateTable(
+		string? pathToFolderWithJson = null,
+		string? PathToOutputFolder = null,
+		ClickHouseDatabaseDetails? databaseDetails = null)
 	{
 		throw new NotImplementedException("This feature is planned for future releases");
 	}

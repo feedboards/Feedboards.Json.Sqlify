@@ -38,7 +38,7 @@ CREATE TABLE IF NOT EXISTS eleven_inc_index
             `position` Int8,
             `updated_at` DateTime,
             `product_id` Int64,
-            `variant_ids` Nullable(Array(String)),
+            `variant_ids` Array(String),
             `src` String,
             `width` Int16,
             `height` Int16

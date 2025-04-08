@@ -104,7 +104,7 @@ internal class ClickHouseTypeDetector
 		// For an empty array
 		if (value.ValueKind == JsonValueKind.Array)
 		{
-			return value.ToString() == "[]";
+			return false;
 		}
 
 		return false;

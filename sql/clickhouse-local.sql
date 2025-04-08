@@ -700,7 +700,7 @@ ORDER BY tuple();
 
 SET flatten_nested=0;
 
-CREATE TABLE IF NOT EXISTS eleven_inc_index
+CREATE TABLE IF NOT EXISTS eleven_inc_index_test_2
 (
     `products` Nested(
         `id` Int32,
@@ -725,7 +725,7 @@ CREATE TABLE IF NOT EXISTS eleven_inc_index
             `featured_image` Nullable(String),
             `available` UInt8,
             `price` String,
-            `grams` Int16, ------
+            `grams` Int16,
             `compare_at_price` Nullable(String),
             `position` Int8,
             `product_id` Int64,
@@ -738,7 +738,7 @@ CREATE TABLE IF NOT EXISTS eleven_inc_index
             `position` Int8,
             `updated_at` DateTime,
             `product_id` Int64,
-            `variant_ids` Nullable(Array(String)),
+            `variant_ids` Tuple(String),
             `src` String,
             `width` Int16,
             `height` Int16
