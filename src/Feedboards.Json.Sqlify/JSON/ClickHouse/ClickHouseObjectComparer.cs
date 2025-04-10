@@ -17,6 +17,13 @@ internal class ClickHouseObjectComparer
 	{
 		var result = new Dictionary<string, string>();
 
+		if (array.Count == 1)
+		{
+			result = DetectTypeOfPropertyInArray(array[0]);
+
+			return result;
+		}
+
 		for (int i = 0; i < array.Count - 1; i++)
 		{
 			if (i == 0)
@@ -185,7 +192,9 @@ internal class ClickHouseObjectComparer
 				{
 					var arrayType = DetectTypeOfPropertyInArray(property.Value);
 
-					if (arrayType.Count == 1)
+					if (arrayType.Count == 1 &&
+						arrayType.FirstOrDefault().Key == "Feedboards.Json.Sqlify.Array" ||
+						arrayType.FirstOrDefault().Key == "Feedboards.Json.Sqlify.Tuple")
 					{
 						result[property.Name] = clickHouseTypeDetector.MakeNullableIfNeeded(
 							arrayType.FirstOrDefault().Value, property.Value);
@@ -228,11 +237,11 @@ internal class ClickHouseObjectComparer
 
 			if (typesInArray.Values.Distinct().Count() == 1)
 			{
-				result["Array"] = $"Array({typesInArray.FirstOrDefault().Value})";
+				result["Feedboards.Json.Sqlify.Array"] = $"Array({typesInArray.FirstOrDefault().Value})";
 			}
 			else if (typesInArray.Values.Distinct().Count() == 0)
 			{
-				result["Array"] = clickHouseTypeDetector.MakeNullableIfNeeded("Array(String)", element);
+				result["Feedboards.Json.Sqlify.Array"] = clickHouseTypeDetector.MakeNullableIfNeeded("Array(String)", element);
 			}
 			else
 			{
@@ -251,7 +260,7 @@ internal class ClickHouseObjectComparer
 					}
 				}
 
-				result["Tuple"] = $"Tuple({formattedTypes})";
+				result["Feedboards.Json.Sqlify.Tuple"] = $"Tuple({formattedTypes})";
 			}
 		}
 
