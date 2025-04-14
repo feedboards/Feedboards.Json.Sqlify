@@ -5,7 +5,6 @@ using Feedboards.Json.Sqlify.ErrorSystem;
 using Feedboards.Json.Sqlify.ErrorSystem.Exceptions;
 using Feedboards.Json.Sqlify.JSON.ClickHouse;
 using Feedboards.Json.Sqlify.SQL.ClickHouse;
-using System.Text;
 using System.Text.Json;
 using System.Text.RegularExpressions;
 using CustomFileNotFoundException = Feedboards.Json.Sqlify.ErrorSystem.Exceptions.FileNotFoundException;
@@ -66,17 +65,9 @@ public class ClickHouseClient : IClickHouseClient
 
 		try
 		{
-			var jsonText = File.ReadAllText(jsonFolder, Encoding.UTF8);
-			using var document = JsonDocument.Parse(jsonText);
+			var jsonStream = File.OpenRead(jsonFolder);
 
-			var jsonData = document.RootElement;
-
-			var jsonAnalyzer = new ClickHouseJsonAnalyzer();
-			var sqlBuilder = new ClickHouseSQLBuilder();
-
-			var structure = jsonAnalyzer.AnalyzeJsonStructure(jsonData, "");
-
-			return sqlBuilder.GenerateClickHouseSchema(structure, tableName);
+			return GenerateSQL(jsonStream, tableName);
 		}
 		catch (System.IO.FileNotFoundException ex)
 		{
@@ -89,6 +80,53 @@ public class ClickHouseClient : IClickHouseClient
 		catch (JsonException ex)
 		{
 			throw new InvalidJsonStructureException(jsonFolder, ex);
+		}
+	}
+
+	/// Generates SQL schema from FileStream, MemoryStream or Stream and returns it as a string.
+	/// Uses the provided FileStream, MemoryStream or Stream.
+	/// </summary>
+	/// <param name="stream">Stream of the JSON file</param>
+	/// <param name="tableName">Name of the table to generate</param>
+	/// <returns>Generated SQL schema as a string</returns>
+	/// <exception cref="InvalidTableNameException">Thrown when tableName is null or empty</exception>
+	/// <exception cref="InvalidJsonStructureException">Thrown when the JSON file contains invalid JSON</exception>
+	public string GenerateSQL(Stream stream, string tableName)
+	{
+		if (string.IsNullOrEmpty(tableName))
+		{
+			throw new InvalidTableNameException(tableName);
+		}
+
+		if (!ValidTableNameRegex.IsMatch(tableName))
+		{
+			throw new InvalidTableNameException(tableName);
+		}
+
+		try
+		{
+			using var document = JsonDocument.Parse(stream);
+
+			var jsonData = document.RootElement;
+
+			var jsonAnalyzer = new ClickHouseJsonAnalyzer();
+			var sqlBuilder = new ClickHouseSQLBuilder();
+
+			var structure = jsonAnalyzer.AnalyzeJsonStructure(jsonData, "");
+
+			return sqlBuilder.GenerateClickHouseSchema(structure, tableName);
+		}
+		catch (System.IO.FileNotFoundException ex)
+		{
+			throw new CustomFileNotFoundException("FileSteam", "File does not exist", ex);
+		}
+		catch (DirectoryNotFoundException ex)
+		{
+			throw new CustomFileNotFoundException("FileSteam", "Directory does not exist", ex);
+		}
+		catch (JsonException ex)
+		{
+			throw new InvalidJsonStructureException("FileSteam", ex);
 		}
 	}
 
@@ -222,6 +260,69 @@ public class ClickHouseClient : IClickHouseClient
 	}
 
 	/// <summary>
+	/// Generates SQL schema from JSON data and writes it to a file.
+	/// Uses provided paths for both input and output.
+	/// </summary>
+	/// <param name="stream">Stream of the JSON</param>
+	/// <param name="outputFolder">Path to the output SQL file</param>
+	/// <param name="tableName">Name of the table to generate</param>
+	/// <returns>True if the operation was successful</returns>
+	/// <exception cref="InvalidConfigurationException">Thrown when paths are invalid or when tableName is null</exception>
+	/// <exception cref="InvalidTableNameException">Thrown when tableName is null or empty</exception>
+	/// <exception cref="InvalidJsonStructureException">Thrown when the JSON file contains invalid JSON</exception>
+	/// <exception cref="FeedboardsJsonSqlifyException">Thrown when an unexpected error occurs</exception>
+	public bool GenerateSQLAndWrite(Stream stream, string outputFolder, string tableName)
+	{
+		var outputFolderType = Utils.CheckPath(outputFolder);
+
+		if (outputFolderType == FileOrFolderChecker.Folder)
+		{
+			var metadata = new Dictionary<string, object>
+			{
+				["Message"] = "outputFolder argument must be of the file type.",
+				["FileStream"] = stream,
+				["OutputFolderType"] = outputFolderType.ToString()
+			};
+
+			throw new FeedboardsJsonSqlifyException(
+				ErrorCodes.InvalidConfiguration,
+				"Invalid path combination",
+				null,
+				metadata);
+		}
+
+		try
+		{
+			if (string.IsNullOrEmpty(tableName))
+			{
+				throw new InvalidTableNameException(tableName ?? "null");
+			}
+
+			var outputPath = Path.GetFullPath(outputFolder);
+			File.WriteAllText(
+				outputPath,
+				GenerateSQL(
+					stream,
+					tableName));
+
+			return true;
+		}
+		catch (Exception exc) when (exc is not FeedboardsJsonSqlifyException)
+		{
+			throw new FeedboardsJsonSqlifyException(
+				ErrorCodes.UnknownError,
+				"An unexpected error occurred while processing the files",
+				exc,
+				new Dictionary<string, object>
+				{
+					["FileStream"] = stream,
+					["OutputFolder"] = outputFolder,
+					["TableName"] = tableName ?? "null",
+				});
+		}
+	}
+
+	/// <summary>
 	/// Creates a table in ClickHouse database using the generated schema.
 	/// </summary>
 	/// <param name="databaseDetails">Connection details for the ClickHouse database</param>
@@ -245,5 +346,15 @@ public class ClickHouseClient : IClickHouseClient
 		ClickHouseDatabaseDetails? databaseDetails = null)
 	{
 		throw new NotImplementedException("This feature is planned for future releases");
+	}
+
+	public void Dispose()
+	{
+		GC.SuppressFinalize(this);
+	}
+
+	~ClickHouseClient()
+	{
+		this.Dispose();
 	}
 }
