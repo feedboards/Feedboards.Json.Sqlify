@@ -55,6 +55,7 @@ internal class ClickHouseObjectComparer
 		{
 			var trimmedPart = part.Trim();
 			var match = Regex.Match(trimmedPart, pattern);
+
 			if (match.Success)
 			{
 				var transfer = match.Groups[1].Value.Substring(1);
