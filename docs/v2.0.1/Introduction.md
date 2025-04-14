@@ -40,7 +40,7 @@ dotnet build
 ### NuGet Package
 
 ```bash
-NuGet\Install-Package Feedboards.Json.Sqlify -Version 2.0.0
+NuGet\Install-Package Feedboards.Json.Sqlify -Version 2.0.1
 ```
 
 ### Dependency Injection Setup
@@ -232,16 +232,7 @@ try
     client.GenerateSQL(
         jsonFolder: "path/to/input.json",
         outputFolder: "path/to/output.sql",
-        tableName: "my_table",
-        maxDepth: 5  // Limit nesting to 5 levels
-    );
-
-    // Use unlimited depth with maxDepth: 0
-    client.GenerateSQL(
-        jsonFolder: "path/to/input.json",
-        outputFolder: "path/to/output.sql",
-        tableName: "my_table",
-        maxDepth: 0  // No nesting limit
+        tableName: "my_table"
     );
 
     // Process an entire directory with default depth (10)
