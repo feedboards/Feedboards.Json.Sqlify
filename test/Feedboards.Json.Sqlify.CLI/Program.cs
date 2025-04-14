@@ -10,6 +10,24 @@ using Feedboards.Json.Sqlify.Clients.ClickHousel;
 using System.Text;
 using System.Text.RegularExpressions;
 
+
+using (FileStream fs = File.OpenRead("F:\\Synthix\\data\\MRF\\index\\2025-03-01_715-Diesel-LLC-_index.json"))
+{
+	JsonElement jsonElement = ReadJsonElementFromStream(fs);
+	Console.WriteLine(jsonElement.ToString());
+}
+
+JsonElement ReadJsonElementFromStream(Stream stream)
+{
+	// Parse the stream into a JsonDocument, and then clone the RootElement
+	using (JsonDocument doc = JsonDocument.Parse(stream))
+	{
+		return doc.RootElement.Clone();
+	}
+}
+
+var i = 0;
+
 //var data = "Nested(`plan_name` String,`plan_id` String,`plan_id_type` String,`plan_market_type` String)";
 //var data = "Nested(`reporting_plan_id` Nullable(String),`reporting_plan_id_type` Nullable(String),`ids` Nullable(Array(Int8)),`reporting_plans` Nested(`plan_name` String,`plan_id` String,`plan_id_type` String,`plan_market_type` String),`in_network_files` Nullable(Array(String)),`allowed_amount_file` Nullable(Nested(`description` String,`location` String)))";
 //var t = data.Substring(7);
@@ -300,10 +318,19 @@ using System.Text.RegularExpressions;
 
 var client = new ClickHouseClient();
 
+//client.GenerateSQLAndWrite(
+//	"F:\\Synthix\\data\\MRF\\index\\2025-03-01_715-Diesel-LLC-_index.json",
+//	"F:\\Synthix\\data\\MRF\\SQL\\index\\2025-03-01_715-Diesel-LLC-_index.sql",
+//	"mrf_index");
+
 client.GenerateSQLAndWrite(
-	"F:\\Projects\\src\\Feedboards.Json.Sqlify\\test\\Feedboards.Json.Sqlify.CLI\\test\\adyawater.com_products_1.json",
-	"F:\\Projects\\src\\Feedboards.Json.Sqlify\\test\\Feedboards.Json.Sqlify.CLI\\test\\adyawater.com_products_1.sql",
-	"eleven_inc_index");
+	"F:\\Synthix\\data\\MRF\\index",
+	"F:\\Synthix\\data\\MRF\\SQL\\index");
+
+//client.GenerateSQLAndWrite(
+//	"F:\\Projects\\src\\Feedboards.Json.Sqlify\\test\\Feedboards.Json.Sqlify.CLI\\test\\adyawater.com_products_1.json",
+//	"F:\\Projects\\src\\Feedboards.Json.Sqlify\\test\\Feedboards.Json.Sqlify.CLI\\test\\adyawater.com_products_1.sql",
+//	"eleven_inc_index");
 
 //client.GenerateSQLAndWrite(
 //	"F:\\Projects\\src\\Feedboards.Json.Sqlify\\test\\Feedboards.Json.Sqlify.CLI\\test\\MRF\\2025-03-01_7-ELEVEN-INC_index.json",
