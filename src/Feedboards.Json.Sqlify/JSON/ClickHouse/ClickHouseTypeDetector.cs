@@ -9,11 +9,6 @@ internal class ClickHouseTypeDetector
 		switch (value.ValueKind)
 		{
 			case JsonValueKind.String:
-				if (DateTime.TryParse(value.GetString(), out _))
-				{
-					return "String";
-				}
-
 				return "String";
 			case JsonValueKind.Number:
 				if (value.TryGetInt64(out var int64))
@@ -66,7 +61,7 @@ internal class ClickHouseTypeDetector
 		{
 			return type;
 		}
-		if (ShouldBeNullable(value))
+		else if (ShouldBeNullable(value))
 		{
 			return $"Nullable({type})";
 		}
@@ -98,13 +93,7 @@ internal class ClickHouseTypeDetector
 		if (value.ValueKind == JsonValueKind.String)
 		{
 			var str = value.GetString();
-			return string.IsNullOrEmpty(str) || str.ToLower() == "null";
-		}
-
-		// For an empty array
-		if (value.ValueKind == JsonValueKind.Array)
-		{
-			return false;
+			return string.IsNullOrEmpty(str);
 		}
 
 		return false;
