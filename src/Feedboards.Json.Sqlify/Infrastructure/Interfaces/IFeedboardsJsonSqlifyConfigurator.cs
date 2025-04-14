@@ -4,7 +4,7 @@ namespace Feedboards.Json.Sqlify.Infrastructure.Interfaces;
 
 public interface IFeedboardsJsonSqlifyConfigurator
 {
-	IFeedboardsJsonSqlifyConfigurator UseCLickHouseSchema(ClickHouseOption option);
+	IFeedboardsJsonSqlifyConfigurator UseCLickHouseSchema(ClickHouseOption? option = null);
 
 	//TODO add these methods
 
