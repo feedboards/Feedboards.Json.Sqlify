@@ -318,9 +318,12 @@ using System.Text.RegularExpressions;
 
 var client = new ClickHouseClient();
 
+var json = "/Users/nazarkacharaba/Projects/git/Feedboards.Json.Sqlify/test/Feedboards.Json.Sqlify.CLI/test/MRF/2025-03-01_7-ELEVEN-INC_index.json";
+var sql = "/Users/nazarkacharaba/Projects/git/Feedboards.Json.Sqlify/test/Feedboards.Json.Sqlify.CLI/test/MRF/2025-03-01_7-ELEVEN-INC_index.sql";
+
 client.GenerateSQLAndWrite(
-	"F:\\Synthix\\data\\MRF\\index\\2025-03-01_715-Diesel-LLC-_index.json",
-	"F:\\Synthix\\data\\MRF\\SQL\\index\\2025-03-01_715-Diesel-LLC-_index.sql",
+	json,
+	sql,
 	"mrf_index");
 
 //client.GenerateSQLAndWrite(

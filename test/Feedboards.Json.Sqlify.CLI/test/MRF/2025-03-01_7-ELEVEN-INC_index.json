@@ -54,6 +54,30 @@
           "location": "https://uhc-tic-mrf.azureedge.net/public-mrf/2025-03-01/2025-03-01_Surest_Third-Party-Administrator_UHSS---TERMED-GROUP_UNITEDHEALTHCARE-CHOICE-PLUS_-K_UCQ_in-network-rates.json.gz"
         }
       ]
+    },
+    {
+      "reporting_plans": [
+        {
+          "plan_name": "7-ELEVEN--INC-",
+          "plan_id": "751085131",
+          "plan_id_type": "EIN",
+          "plan_market_type": "group"
+        }
+      ],
+      "in_network_files": [
+        {
+          "description": "in-network CMC Fertility Services shared file",
+          "location": "https://uhc-tic-mrf.azureedge.net/public-mrf/2025-03-01/2025-03-01_Surest_Third-Party-Administrator_CMC_RRS_MRRF_in-network-rates.json.gz"
+        },
+        {
+          "description": "in-network CMC Transplant shared files",
+          "location": "https://uhc-tic-mrf.azureedge.net/public-mrf/2025-03-01/2025-03-01_Surest_Third-Party-Administrator_CMC_Transplant_MRRF_in-network-rates.json.gz"
+        },
+        {
+          "description": "in-network files",
+          "location": "https://uhc-tic-mrf.azureedge.net/public-mrf/2025-03-01/2025-03-01_Surest_Third-Party-Administrator_UHSS---TERMED-GROUP_UNITEDHEALTHCARE-CHOICE-PLUS_-K_UCQ_in-network-rates.json.gz"
+        }
+      ]
     }
   ]
 }

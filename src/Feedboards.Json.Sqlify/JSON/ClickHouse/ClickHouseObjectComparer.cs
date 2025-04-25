@@ -95,7 +95,9 @@ internal class ClickHouseObjectComparer
 			}
 
 			if (sb.Length > 0)
+			{
 				resultList.Add(sb.ToString());
+			}
 
 			return resultList;
 		}
@@ -132,6 +134,7 @@ internal class ClickHouseObjectComparer
 
 		//Check if any property is null
 		var result = new Dictionary<string, string>();
+		
 		if (firstElement.Count > allFieldsOfSecondArray.Count)
 		{
 			result = SetNullable(firstElement, allFieldsOfSecondArray);
@@ -152,7 +155,14 @@ internal class ClickHouseObjectComparer
 
 		foreach (var property in firstElement)
 		{
-			if (
+			//In this case we need to take the same property from the second object if there exists this property.
+			if (property.Value == "Array(String)" &&
+			    secondElement.TryGetValue(property.Key, out var value) &&
+			    value.StartsWith("Nested(")) // We use `Array(String)` because it is default value for an empty array
+			{
+				setNullResult[property.Key] = value;
+			}
+			else if (
 				property.Value.StartsWith("Nested(") &&
 				secondElement.ContainsKey(property.Key))
 			{
@@ -164,11 +174,20 @@ internal class ClickHouseObjectComparer
 			}
 			else if (!secondElement.ContainsKey(property.Key))
 			{
-				setNullResult.Add(property.Key, $"Nullable({property.Value})");
+				if (
+					property.Value.StartsWith("Array(") ||
+					property.Value.StartsWith("Nullable("))
+				{
+					setNullResult[property.Key] = property.Value;
+				}
+				else
+				{
+					setNullResult[property.Key] = $"Nullable({property.Value})";
+				}
 			}
 			else
 			{
-				setNullResult.Add(property.Key, property.Value);
+				setNullResult[property.Key] = property.Value;
 			}
 		}
 
@@ -178,8 +197,8 @@ internal class ClickHouseObjectComparer
 	private Dictionary<string, string> DetectTypeOfPropertyInArray(JsonElement element)
 	{
 		var result = new Dictionary<string, string>();
-
-		try
+		
+		if (element.ValueKind == JsonValueKind.Object)
 		{
 			foreach (var property in element.EnumerateObject())
 			{
@@ -216,7 +235,7 @@ internal class ClickHouseObjectComparer
 				}
 			}
 		}
-		catch (InvalidOperationException exc)
+		else
 		{
 			var typesInArray = new Dictionary<string, string>();
 
@@ -264,7 +283,7 @@ internal class ClickHouseObjectComparer
 				result["Feedboards.Json.Sqlify.Tuple"] = $"Tuple({formattedTypes})";
 			}
 		}
-
+		
 		return result;
 	}
 }
