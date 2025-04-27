@@ -1,5 +1,6 @@
-﻿namespace Feedboards.Json.Sqlify.SQL.ClickHouse;
-using System.Text;
+﻿using System.Text;
+
+namespace Feedboards.Json.Sqlify.SQL.ClickHouse;
 
 internal class ClickHouseSQLBuilder
 {
