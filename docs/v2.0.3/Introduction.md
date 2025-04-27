@@ -339,7 +339,7 @@ This project is licensed under the MIT License - see the [LICENSE](https://githu
 
 For support, please:
 
-1. Check the [documentation](https://github.com/feedboards/Feedboards.Json.Sqlify/tree/dev/docs/v2.0.3S)
+1. Check the [documentation](https://github.com/feedboards/Feedboards.Json.Sqlify/tree/dev/docs/v2.0.3)
 2. Open an issue in the GitHub repository
 3. Contact the maintainers
 

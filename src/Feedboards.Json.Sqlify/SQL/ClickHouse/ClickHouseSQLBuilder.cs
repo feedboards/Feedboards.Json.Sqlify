@@ -109,15 +109,15 @@ internal class ClickHouseSQLBuilder
 
 		result.AppendLine("Nested(");
 
-		string indent = new string(' ', 4 * (indentationLevel + 1));
-		for (int i = 0; i < fields.Count; i++)
+		var indent = new string(' ', 4 * (indentationLevel + 1));
+		for (var i = 0; i < fields.Count; i++)
 		{
 			var (name, fieldType) = fields[i];
 			result.Append(indent).Append('`').Append(name).Append("` ");
 
 			if (fieldType.Contains("Nested("))
 			{
-				string nestedFormatted = FormatNestedTypeRecursively(fieldType, indentationLevel + 1);
+				var nestedFormatted = FormatNestedTypeRecursively(fieldType, indentationLevel + 1);
 				result.Append(nestedFormatted);
 			}
 			else
@@ -202,7 +202,7 @@ internal class ClickHouseSQLBuilder
 
 		while (pos < content.Length && insideType)
 		{
-			char c = content[pos];
+			var c = content[pos];
 
 			if (c == '(')
 			{
