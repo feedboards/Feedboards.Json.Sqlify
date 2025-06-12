@@ -83,6 +83,7 @@ public class ClickHouseClient : IClickHouseClient
 		}
 	}
 
+	/// <summary>
 	/// Generates SQL schema from FileStream, MemoryStream or Stream and returns it as a string.
 	/// Uses the provided FileStream, MemoryStream or Stream.
 	/// </summary>
@@ -114,7 +115,7 @@ public class ClickHouseClient : IClickHouseClient
 
 			var structure = jsonAnalyzer.AnalyzeJsonStructure(jsonData, "");
 
-			return sqlBuilder.GenerateClickHouseSchema(structure, tableName);
+			return sqlBuilder.GenerateSchema(structure, tableName);
 		}
 		catch (System.IO.FileNotFoundException ex)
 		{

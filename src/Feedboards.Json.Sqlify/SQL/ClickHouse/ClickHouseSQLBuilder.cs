@@ -1,10 +1,11 @@
 ﻿using System.Text;
+using Feedboards.Json.Sqlify.Infrastructure.SQL;
 
 namespace Feedboards.Json.Sqlify.SQL.ClickHouse;
 
-internal class ClickHouseSQLBuilder
+internal class ClickHouseSQLBuilder : ISQLBuilder
 {
-	public string GenerateClickHouseSchema(Dictionary<string, string> structure, string tableName)
+	public string GenerateSchema(Dictionary<string, string> structure, string tableName)
 	{
 		var needsFlattenNested = HasNestedInNested(structure);
 

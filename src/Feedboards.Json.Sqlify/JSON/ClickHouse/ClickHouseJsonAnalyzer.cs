@@ -1,17 +1,12 @@
 ﻿using System.Text.Json;
+using Feedboards.Json.Sqlify.Infrastructure.JSON;
 
 namespace Feedboards.Json.Sqlify.JSON.ClickHouse;
 
-internal class ClickHouseJsonAnalyzer
+internal class ClickHouseJsonAnalyzer : IJsonAnalyzer
 {
-	private readonly ClickHouseObjectComparer clickHouseObjectComparer;
-	private readonly ClickHouseTypeDetector clickHouseTypeDetector;
-
-	public ClickHouseJsonAnalyzer()
-	{
-		this.clickHouseObjectComparer = new ClickHouseObjectComparer();
-		this.clickHouseTypeDetector = new ClickHouseTypeDetector();
-	}
+	private readonly ClickHouseObjectComparer clickHouseObjectComparer = new();
+	private readonly ClickHouseTypeDetector clickHouseTypeDetector = new();
 
 	/// <summary>
 	/// Recursively analyze the structure of a JSON object to determine field types.
@@ -55,11 +50,11 @@ internal class ClickHouseJsonAnalyzer
 						var result = clickHouseObjectComparer.SumUpArrays(arr);
 						var formattedString = ClickHouseJsonUtils.FormatNestedStructure(result);
 
-						structure[fieldPath] = clickHouseTypeDetector.MakeNullableIfNeeded(formattedString, value);
+						structure[fieldPath] = clickHouseTypeDetector.DetectNullableType(value, formattedString);
 					}
 					else
 					{
-						structure[fieldPath] = clickHouseTypeDetector.MakeNullableIfNeeded("Array(String)", value);
+						structure[fieldPath] = clickHouseTypeDetector.DetectNullableType(value, "Array(String)");
 					}
 
 					continue;
@@ -77,8 +72,8 @@ internal class ClickHouseJsonAnalyzer
 				}
 
 				// Handle simple values
-				var type = clickHouseTypeDetector.GetClickHouseType(value);
-				type = clickHouseTypeDetector.MakeNullableIfNeeded(type, value);
+				var type = clickHouseTypeDetector.DetectType(value);
+				type = clickHouseTypeDetector.DetectNullableType(value, type);
 
 				structure[fieldPath] = type;
 			}
@@ -86,7 +81,7 @@ internal class ClickHouseJsonAnalyzer
 		else
 		{
 			// Handle simple values at root level
-			structure[prefix] = clickHouseTypeDetector.GetClickHouseType(jsonData);
+			structure[prefix] = clickHouseTypeDetector.DetectType(jsonData);
 		}
 
 		return structure;

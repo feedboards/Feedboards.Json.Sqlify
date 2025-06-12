@@ -6,12 +6,7 @@ namespace Feedboards.Json.Sqlify.JSON.ClickHouse;
 
 internal class ClickHouseObjectComparer
 {
-	private readonly ClickHouseTypeDetector clickHouseTypeDetector;
-
-	public ClickHouseObjectComparer()
-	{
-		this.clickHouseTypeDetector = new ClickHouseTypeDetector();
-	}
+	private readonly ClickHouseTypeDetector clickHouseTypeDetector = new();
 
 	public Dictionary<string, string> SumUpArrays(List<JsonElement> array)
 	{
@@ -203,10 +198,10 @@ internal class ClickHouseObjectComparer
 			foreach (var property in element.EnumerateObject())
 			{
 				// Simple types
-				var type = clickHouseTypeDetector.GetClickHouseType(property.Value);
+				var type = clickHouseTypeDetector.DetectType(property.Value);
 				if (!string.IsNullOrEmpty(type))
 				{
-					result[property.Name] = clickHouseTypeDetector.MakeNullableIfNeeded(type, property.Value);
+					result[property.Name] = clickHouseTypeDetector.DetectNullableType(property.Value, type);
 				}
 				else if (property.Value.ValueKind == JsonValueKind.Array)
 				{
@@ -216,14 +211,14 @@ internal class ClickHouseObjectComparer
 						arrayType.FirstOrDefault().Key == "Feedboards.Json.Sqlify.Array" ||
 						arrayType.FirstOrDefault().Key == "Feedboards.Json.Sqlify.Tuple")
 					{
-						result[property.Name] = clickHouseTypeDetector.MakeNullableIfNeeded(
-							arrayType.FirstOrDefault().Value, property.Value);
+						result[property.Name] = clickHouseTypeDetector.DetectNullableType(
+							property.Value, arrayType.FirstOrDefault().Value);
 					}
 					else
 					{
 						var formattedString = ClickHouseJsonUtils.FormatNestedStructure(arrayType);
 
-						result[property.Name] = clickHouseTypeDetector.MakeNullableIfNeeded(formattedString, property.Value);
+						result[property.Name] = clickHouseTypeDetector.DetectNullableType(property.Value, formattedString);
 					}
 				}
 				else if (property.Value.ValueKind == JsonValueKind.Object)
@@ -231,7 +226,7 @@ internal class ClickHouseObjectComparer
 					var propertiesOfObject = DetectTypeOfPropertyInArray(property.Value);
 					var formattedString = ClickHouseJsonUtils.FormatNestedStructure(propertiesOfObject);
 
-					result[property.Name] = clickHouseTypeDetector.MakeNullableIfNeeded(formattedString, property.Value);
+					result[property.Name] = clickHouseTypeDetector.DetectNullableType(property.Value, formattedString);
 				}
 			}
 		}
@@ -248,7 +243,7 @@ internal class ClickHouseObjectComparer
 				}
 				else
 				{
-					var type = clickHouseTypeDetector.GetClickHouseType(property);
+					var type = clickHouseTypeDetector.DetectType(property);
 
 					typesInArray[index.ToString()] = type;
 					index++;
@@ -261,7 +256,7 @@ internal class ClickHouseObjectComparer
 			}
 			else if (typesInArray.Values.Distinct().Count() == 0)
 			{
-				result["Feedboards.Json.Sqlify.Array"] = clickHouseTypeDetector.MakeNullableIfNeeded("Array(String)", element);
+				result["Feedboards.Json.Sqlify.Array"] = clickHouseTypeDetector.DetectNullableType(element, "Array(String)");
 			}
 			else
 			{

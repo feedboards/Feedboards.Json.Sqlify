@@ -1,10 +1,11 @@
 ﻿using System.Text.Json;
+using Feedboards.Json.Sqlify.Infrastructure.JSON;
 
 namespace Feedboards.Json.Sqlify.JSON.ClickHouse;
 
-internal class ClickHouseTypeDetector
+internal class ClickHouseTypeDetector : ITypeDetector
 {
-	public string GetClickHouseType(JsonElement value)
+	public string DetectType(JsonElement value)
 	{
 		switch (value.ValueKind)
 		{
@@ -55,7 +56,7 @@ internal class ClickHouseTypeDetector
 	/// <summary>
 	/// Wraps a type with Nullable if needed
 	/// </summary>
-	public string MakeNullableIfNeeded(string type, JsonElement value)
+	public string DetectNullableType(JsonElement value, string type)
 	{
 		if (type.Contains("Nullable("))
 		{
