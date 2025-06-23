@@ -7,9 +7,24 @@ using Feedboards.Json.Sqlify.JSON.ClickHouse;
 using CustomFileNotFoundException = Feedboards.Json.Sqlify.ErrorSystem.Exceptions.FileNotFoundException;
 using System.Text.Json;
 using Feedboards.Json.Sqlify.Clients.ClickHousel;
+using Feedboards.Json.Sqlify.JSON.PostgreSQL;
 using System.Text;
 using System.Text.RegularExpressions;
 
+var path = "/Users/nazarkacharaba/Projects/git/Feedboards.Json.Sqlify/test/Feedboards.Json.Sqlify.CLI/test/MRF/2025-03-01_7-ELEVEN-INC_index.json";
+// var path = Path.Combine("test", "JSON", "MRF", "2025-03-01_7-ELEVEN-INC.json");
+
+if (!File.Exists(path))
+{
+	Console.Error.WriteLine($"File not found: {path}");
+	return;
+}
+
+var json = File.ReadAllText(path);
+var doc = JsonDocument.Parse(json);
+
+var analyzer = new TestPostgresJsonAnalyzer();
+Console.WriteLine(analyzer.GenerateDDL(doc.RootElement));
 
 //using (FileStream fs = File.OpenRead("F:\\Synthix\\data\\MRF\\index\\2025-03-01_715-Diesel-LLC-_index.json"))
 //{
@@ -20,7 +35,7 @@ using System.Text.RegularExpressions;
 //JsonElement ReadJsonElementFromStream(Stream stream)
 //{
 //	// Parse the stream into a JsonDocument, and then clone the RootElement
-//	using (JsonDocument doc = JsonDocument.Parse(stream))
+//	using (JsonDocument doc = JsonDocument.Parse(sstream))
 //	{
 //		return doc.RootElement.Clone();
 //	}
@@ -316,15 +331,15 @@ using System.Text.RegularExpressions;
 //	}
 //}
 
-var client = new ClickHouseClient();
-
-var json = "/Users/nazarkacharaba/Projects/git/Feedboards.Json.Sqlify/test/Feedboards.Json.Sqlify.CLI/test/MRF/2025-03-01_7-ELEVEN-INC_index.json";
-var sql = "/Users/nazarkacharaba/Projects/git/Feedboards.Json.Sqlify/test/Feedboards.Json.Sqlify.CLI/test/MRF/2025-03-01_7-ELEVEN-INC_index.sql";
-
-client.GenerateSQLAndWrite(
-	json,
-	sql,
-	"mrf_index");
+// var client = new ClickHouseClient();
+//
+// var json = "/Users/nazarkacharaba/Projects/git/Feedboards.Json.Sqlify/test/Feedboards.Json.Sqlify.CLI/test/MRF/2025-03-01_7-ELEVEN-INC_index.json";
+// var sql = "/Users/nazarkacharaba/Projects/git/Feedboards.Json.Sqlify/test/Feedboards.Json.Sqlify.CLI/test/MRF/2025-03-01_7-ELEVEN-INC_index.sql";
+//
+// client.GenerateSQLAndWrite(
+// 	json,
+// 	sql,
+// 	"mrf_index");
 
 //client.GenerateSQLAndWrite(
 //	"F:\\Synthix\\data\\MRF\\index",
