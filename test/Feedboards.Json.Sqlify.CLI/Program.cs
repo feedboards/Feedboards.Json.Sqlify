@@ -7,7 +7,7 @@ using Feedboards.Json.Sqlify.JSON.ClickHouse;
 using CustomFileNotFoundException = Feedboards.Json.Sqlify.ErrorSystem.Exceptions.FileNotFoundException;
 using System.Text.Json;
 using Feedboards.Json.Sqlify.Clients.ClickHousel;
-using Feedboards.Json.Sqlify.JSON.PostgreSQL;
+using Feedboards.Json.Sqlify.JSON.PostgresSql;
 using System.Text;
 using System.Text.RegularExpressions;
 
@@ -23,8 +23,8 @@ if (!File.Exists(path))
 var json = File.ReadAllText(path);
 var doc = JsonDocument.Parse(json);
 
-var analyzer = new TestPostgresJsonAnalyzer();
-Console.WriteLine(analyzer.GenerateDDL(doc.RootElement));
+var analyzer = new PostgresSqlJsonAnalyzer();
+Console.WriteLine(analyzer.AnalyzeJsonStructure(doc.RootElement, ""));
 
 //using (FileStream fs = File.OpenRead("F:\\Synthix\\data\\MRF\\index\\2025-03-01_715-Diesel-LLC-_index.json"))
 //{
