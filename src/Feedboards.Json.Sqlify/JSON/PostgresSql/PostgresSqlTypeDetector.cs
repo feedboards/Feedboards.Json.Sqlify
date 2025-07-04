@@ -4,10 +4,19 @@ namespace Feedboards.Json.Sqlify.JSON.PostgresSql;
 
 public class PostgresSqlTypeDetector
 {
-    private readonly string notNullDefinition = "NOT NULL";
+    private readonly string notNullDeclaration = "NOT NULL";
+    //TODO add this from PGSQL 10+ version "INTEGER GENERATED ALWAYS AS IDENTITY"
+    private readonly string primaryKeyDeclaration = "PRIMARY KEY";
     
-    public string? DetectType(JsonElement value)
+    public string? DetectType(JsonElement value, bool? isPrimaryKey = null)
     {
+        //TODO add this from PGSQL 10+ version "INTEGER GENERATED ALWAYS AS IDENTITY"
+        //For now can be SERIAL for tests
+        if (isPrimaryKey == true)
+        {
+            return $"SERIAL {primaryKeyDeclaration}";
+        }
+        
         var result = value.ValueKind switch
         {
             JsonValueKind.String => "VARCHAR",
@@ -17,11 +26,8 @@ public class PostgresSqlTypeDetector
             JsonValueKind.Null => "TEXT", // Fallback for null
             _ => null
         };
-
-        // Set value as not nullable by default
-        result += $" {notNullDefinition}";
-
-        return result;
+        
+        return result += $" {notNullDeclaration}";
     }
 
     public string DetectNullableType(JsonElement value, string? type)
@@ -29,13 +35,15 @@ public class PostgresSqlTypeDetector
         //TODO update exception
         ArgumentException.ThrowIfNullOrEmpty(type);
         
-        if (!type.Contains(notNullDefinition))
+        if (!type.Contains(notNullDeclaration))
         {
             return type;
         }
         else if (ShouldBeNullable(value))
         {
+            return type.Replace(notNullDeclaration, "", StringComparison.OrdinalIgnoreCase).Trim();
         }
+        
         return type;
     }
     
